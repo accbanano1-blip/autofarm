@@ -42,7 +42,7 @@ Button.Draggable, Button.Active = true, true
 UICorner.CornerRadius = UDim.new(0, 12)
 
 local Running = true
-Button.Text = "Auto TP: ON"
+Button.Text = "TP MOB: ON"
 Button.BackgroundColor3 = Color3.fromRGB(0, 120, 255)
 
 -- Hàm kiểm tra xem quái có nằm trong danh sách đen không
@@ -97,6 +97,6 @@ end)
 
 Button.MouseButton1Click:Connect(function()
     Running = not Running
-    Button.Text = Running and "Auto TP: ON" or "Auto TP: OFF"
+    Button.Text = Running and "TP MOB: ON" or "TB MOB: OFF"
     Button.BackgroundColor3 = Running and Color3.fromRGB(0, 120, 255) or Color3.fromRGB(150, 0, 0)
 end)
