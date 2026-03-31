@@ -18,7 +18,7 @@ countdownLabel.TextSize = 30
 Instance.new("UICorner", countdownLabel).CornerRadius = UDim.new(0, 15)
 
 for i = 10, 1, -1 do
-    countdownLabel.Text = "Sẽ khởi động sau: " .. i .. "s\n(Bỏ qua: Cactus)"
+    countdownLabel.Text = "start tron: " .. i .. "s\n(script by lộc )"
     if i <= 3 then countdownLabel.TextColor3 = Color3.fromRGB(255, 80, 80) end
     task.wait(1)
 end
