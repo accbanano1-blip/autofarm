@@ -1,0 +1,96 @@
+local p = game.Players.LocalPlayer
+local pg = p:WaitForChild("PlayerGui")
+
+-- 1. TẠO GIAO DIỆN ĐẾM NGƯỢC
+local countdownGui = Instance.new("ScreenGui", pg)
+countdownGui.Name = "CountdownSystem"
+
+local countdownLabel = Instance.new("TextLabel", countdownGui)
+countdownLabel.Size = UDim2.new(0, 300, 0, 100)
+countdownLabel.Position = UDim2.new(0.5, -150, 0.4, 0)
+countdownLabel.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+countdownLabel.BackgroundTransparency = 0.5
+countdownLabel.TextColor3 = Color3.fromRGB(255, 255, 0) -- Màu vàng
+countdownLabel.Font = Enum.Font.SourceSansBold
+countdownLabel.TextSize = 40
+Instance.new("UICorner", countdownLabel)
+
+-- Vòng lặp đếm ngược
+for i = 5, 1, -1 do
+    countdownLabel.Text = "Đang khởi động: " .. i .. "s"
+    task.wait(1)
+end
+
+-- Xóa bảng đếm ngược khi xong
+countdownGui:Destroy()
+
+-- 2. CHẠY SCRIPT CHÍNH (SAU KHI ĐỢI 5 GIÂY)
+if pg:FindFirstChild("OneTimeTPGui") then
+    pg.OneTimeTPGui:Destroy()
+end
+
+local ScreenGui = Instance.new("ScreenGui", pg)
+local Button = Instance.new("TextButton", ScreenGui)
+local UICorner = Instance.new("UICorner", Button)
+
+ScreenGui.Name = "OneTimeTPGui"
+ScreenGui.ResetOnSpawn = false
+
+-- THIẾT LẬP NÚT BẤM
+Button.Size = UDim2.new(0, 160, 0, 50)
+Button.Position = UDim2.new(0.5, -80, 0.15, 0)
+Button.TextColor3 = Color3.fromRGB(255, 255, 255)
+Button.Font = Enum.Font.SourceSansBold
+Button.TextSize = 18
+Button.Draggable = true 
+Button.Active = true
+UICorner.CornerRadius = UDim.new(0, 12)
+
+-- TRẠNG THÁI MẶC ĐỊNH: BẬT
+local Running = true
+Button.Text = "Auto TP: ON"
+Button.BackgroundColor3 = Color3.fromRGB(0, 120, 255)
+
+-- Hàm tìm quái gần nhất
+function findTarget()
+    local target = nil
+    local dist = math.huge
+    for _, v in pairs(workspace:GetDescendants()) do
+        if v:IsA("Model") and v:FindFirstChild("Humanoid") and v.Humanoid.Health > 0 and v ~= p.Character then
+            local root = v:FindFirstChild("HumanoidRootPart")
+            if root then
+                local d = (p.Character.HumanoidRootPart.Position - root.Position).Magnitude
+                if d < dist then
+                    dist = d
+                    target = v
+                end
+            end
+        end
+    end
+    return target
+end
+
+-- Vòng lặp điều khiển Farm
+task.spawn(function()
+    while true do
+        task.wait(0.5)
+        if Running then
+            local mob = findTarget()
+            if mob and mob:FindFirstChild("HumanoidRootPart") then
+                if p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
+                    p.Character.HumanoidRootPart.CFrame = mob.HumanoidRootPart.CFrame * CFrame.new(0, 0, 3)
+                end
+                repeat
+                    task.wait(0.2)
+                until not Running or not mob:FindFirstChild("Humanoid") or mob.Humanoid.Health <= 0
+            end
+        end
+    end
+end)
+
+-- Sự kiện Click
+Button.MouseButton1Click:Connect(function()
+    Running = not Running
+    Button.Text = Running and "Auto TP: ON" or "Auto TP: OFF"
+    Button.BackgroundColor3 = Running and Color3.fromRGB(0, 120, 255) or Color3.fromRGB(150, 0, 0)
+end)
