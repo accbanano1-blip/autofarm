@@ -97,6 +97,6 @@ end)
 
 Button.MouseButton1Click:Connect(function()
     Running = not Running
-    Button.Text = Running and "TP MOB: ON" or "TB MOB: OFF"
+    Button.Text = Running and "TP MOB: ON" or "TP MOB: OFF"
     Button.BackgroundColor3 = Running and Color3.fromRGB(0, 120, 255) or Color3.fromRGB(150, 0, 0)
 end)
