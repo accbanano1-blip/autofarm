@@ -1,7 +1,34 @@
--- Chuyển sang PlayerGui để chắc chắn hiện nút trên Mobile
 local p = game.Players.LocalPlayer
 local pg = p:WaitForChild("PlayerGui")
 
+-- 1. TẠO GIAO DIỆN ĐẾM NGƯỢC (10 GIÂY)
+local countdownGui = Instance.new("ScreenGui", pg)
+countdownGui.Name = "CountdownSystem"
+
+local countdownLabel = Instance.new("TextLabel", countdownGui)
+countdownLabel.Size = UDim2.new(0, 300, 0, 100)
+countdownLabel.Position = UDim2.new(0.5, -150, 0.4, 0)
+countdownLabel.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+countdownLabel.BackgroundTransparency = 0.4
+countdownLabel.TextColor3 = Color3.fromRGB(255, 255, 255) -- Màu trắng cho dễ nhìn
+countdownLabel.Font = Enum.Font.SourceSansBold
+countdownLabel.TextSize = 35
+Instance.new("UICorner", countdownLabel).CornerRadius = UDim.new(0, 15)
+
+-- Vòng lặp đếm ngược từ 10 về 1
+for i = 10, 1, -1 do
+    countdownLabel.Text = "Hệ thống sẽ bật sau: " .. i .. "s"
+    -- Hiệu ứng đổi màu đỏ dần khi sắp hết thời gian
+    if i <= 3 then
+        countdownLabel.TextColor3 = Color3.fromRGB(255, 80, 80)
+    end
+    task.wait(1)
+end
+
+-- Xóa bảng đếm ngược
+countdownGui:Destroy()
+
+-- 2. CHẠY SCRIPT CHÍNH
 if pg:FindFirstChild("OneTimeTPGui") then
     pg.OneTimeTPGui:Destroy()
 end
@@ -19,14 +46,13 @@ Button.Position = UDim2.new(0.5, -80, 0.15, 0)
 Button.TextColor3 = Color3.fromRGB(255, 255, 255)
 Button.Font = Enum.Font.SourceSansBold
 Button.TextSize = 18
-Button.Draggable = true 
-Button.Active = true
+Button.Draggable, Button.Active = true, true
 UICorner.CornerRadius = UDim.new(0, 12)
 
--- BIẾN ĐIỀU KHIỂN: MẶC ĐỊNH LÀ TRUE ĐỂ CHẠY LUÔN
+-- TRẠNG THÁI MẶC ĐỊNH: BẬT
 local Running = true
 Button.Text = "Auto TP: ON"
-Button.BackgroundColor3 = Color3.fromRGB(0, 120, 255) -- Màu xanh dương (Đang chạy)
+Button.BackgroundColor3 = Color3.fromRGB(0, 120, 255)
 
 -- Hàm tìm quái gần nhất
 function findTarget()
@@ -47,35 +73,27 @@ function findTarget()
     return target
 end
 
--- Vòng lặp điều khiển
+-- Vòng lặp điều khiển Farm
 task.spawn(function()
     while true do
         task.wait(0.5)
         if Running then
             local mob = findTarget()
             if mob and mob:FindFirstChild("HumanoidRootPart") then
-                -- THỰC HIỆN TP 1 LẦN
                 if p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
                     p.Character.HumanoidRootPart.CFrame = mob.HumanoidRootPart.CFrame * CFrame.new(0, 0, 3)
                 end
-                
-                -- ĐỢI CHO ĐẾN KHI QUÁI CHẾT HOẶC TẮT SCRIPT
                 repeat
                     task.wait(0.2)
-                until not Running or not mob:FindFirstChild("Humanoid") or mob.Humanoid.Health <= 0
+                until not Running or not (mob:FindFirstChild("Humanoid") and mob.Humanoid.Health > 0)
             end
         end
     end
 end)
 
--- Sự kiện Click để TẮT/BẬT
+-- Sự kiện Click Tắt/Bật
 Button.MouseButton1Click:Connect(function()
     Running = not Running
-    if Running then
-        Button.Text = "Auto TP: ON"
-        Button.BackgroundColor3 = Color3.fromRGB(0, 120, 255)
-    else
-        Button.Text = "Auto TP: OFF"
-        Button.BackgroundColor3 = Color3.fromRGB(150, 0, 0) -- Màu đỏ (Đã tắt)
-    end
+    Button.Text = Running and "Auto TP: ON" or "Auto TP: OFF"
+    Button.BackgroundColor3 = Running and Color3.fromRGB(0, 120, 255) or Color3.fromRGB(150, 0, 0)
 end)
