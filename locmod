@@ -1,37 +1,31 @@
 local p = game.Players.LocalPlayer
 local pg = p:WaitForChild("PlayerGui")
 
+-- DANH SÁCH QUÁI KHÔNG MUỐN TP (BLACKTiST)
+local blacklistedMobs = {"Cactus", "Xương Rồng"} -- Thêm tên quái vào đây nếu muốn bỏ qua thêm
+
 -- 1. TẠO GIAO DIỆN ĐẾM NGƯỢC (10 GIÂY)
 local countdownGui = Instance.new("ScreenGui", pg)
 countdownGui.Name = "CountdownSystem"
-
 local countdownLabel = Instance.new("TextLabel", countdownGui)
 countdownLabel.Size = UDim2.new(0, 300, 0, 100)
 countdownLabel.Position = UDim2.new(0.5, -150, 0.4, 0)
 countdownLabel.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
 countdownLabel.BackgroundTransparency = 0.4
-countdownLabel.TextColor3 = Color3.fromRGB(255, 255, 255) -- Màu trắng cho dễ nhìn
+countdownLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
 countdownLabel.Font = Enum.Font.SourceSansBold
-countdownLabel.TextSize = 35
+countdownLabel.TextSize = 30
 Instance.new("UICorner", countdownLabel).CornerRadius = UDim.new(0, 15)
 
--- Vòng lặp đếm ngược từ 10 về 1
 for i = 10, 1, -1 do
-    countdownLabel.Text = "Hệ thống sẽ bật sau: " .. i .. "s"
-    -- Hiệu ứng đổi màu đỏ dần khi sắp hết thời gian
-    if i <= 3 then
-        countdownLabel.TextColor3 = Color3.fromRGB(255, 80, 80)
-    end
+    countdownLabel.Text = "Sẽ khởi động sau: " .. i .. "s\n(Bỏ qua: Cactus)"
+    if i <= 3 then countdownLabel.TextColor3 = Color3.fromRGB(255, 80, 80) end
     task.wait(1)
 end
-
--- Xóa bảng đếm ngược
 countdownGui:Destroy()
 
 -- 2. CHẠY SCRIPT CHÍNH
-if pg:FindFirstChild("OneTimeTPGui") then
-    pg.OneTimeTPGui:Destroy()
-end
+if pg:FindFirstChild("OneTimeTPGui") then pg.OneTimeTPGui:Destroy() end
 
 local ScreenGui = Instance.new("ScreenGui", pg)
 local Button = Instance.new("TextButton", ScreenGui)
@@ -39,8 +33,6 @@ local UICorner = Instance.new("UICorner", Button)
 
 ScreenGui.Name = "OneTimeTPGui"
 ScreenGui.ResetOnSpawn = false
-
--- THIẾT LẬP NÚT BẤM
 Button.Size = UDim2.new(0, 160, 0, 50)
 Button.Position = UDim2.new(0.5, -80, 0.15, 0)
 Button.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -49,23 +41,35 @@ Button.TextSize = 18
 Button.Draggable, Button.Active = true, true
 UICorner.CornerRadius = UDim.new(0, 12)
 
--- TRẠNG THÁI MẶC ĐỊNH: BẬT
 local Running = true
 Button.Text = "Auto TP: ON"
 Button.BackgroundColor3 = Color3.fromRGB(0, 120, 255)
 
--- Hàm tìm quái gần nhất
+-- Hàm kiểm tra xem quái có nằm trong danh sách đen không
+function isBlacklisted(mobName)
+    for _, name in pairs(blacklistedMobs) do
+        if mobName:lower():find(name:lower()) then
+            return true
+        end
+    end
+    return false
+end
+
+-- Hàm tìm quái gần nhất (loại trừ Blacklist)
 function findTarget()
     local target = nil
     local dist = math.huge
     for _, v in pairs(workspace:GetDescendants()) do
         if v:IsA("Model") and v:FindFirstChild("Humanoid") and v.Humanoid.Health > 0 and v ~= p.Character then
-            local root = v:FindFirstChild("HumanoidRootPart")
-            if root then
-                local d = (p.Character.HumanoidRootPart.Position - root.Position).Magnitude
-                if d < dist then
-                    dist = d
-                    target = v
+            -- KIỂM TRA TÊN QUÁI TRƯỚC KHI CHỌN
+            if not isBlacklisted(v.Name) then
+                local root = v:FindFirstChild("HumanoidRootPart")
+                if root then
+                    local d = (p.Character.HumanoidRootPart.Position - root.Position).Magnitude
+                    if d < dist then
+                        dist = d
+                        target = v
+                    end
                 end
             end
         end
@@ -73,7 +77,7 @@ function findTarget()
     return target
 end
 
--- Vòng lặp điều khiển Farm
+-- Vòng lặp điều khiển
 task.spawn(function()
     while true do
         task.wait(0.5)
@@ -91,7 +95,6 @@ task.spawn(function()
     end
 end)
 
--- Sự kiện Click Tắt/Bật
 Button.MouseButton1Click:Connect(function()
     Running = not Running
     Button.Text = Running and "Auto TP: ON" or "Auto TP: OFF"
