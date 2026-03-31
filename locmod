@@ -18,7 +18,7 @@ countdownLabel.TextSize = 30
 Instance.new("UICorner", countdownLabel).CornerRadius = UDim.new(0, 15)
 
 for i = 10, 1, -1 do
-    countdownLabel.Text = "start in: " .. i .. "s\n(script by lộc )"
+    countdownLabel.Text = "start in: " .. i .. "s\n(script by lộc)"
     if i <= 3 then countdownLabel.TextColor3 = Color3.fromRGB(255, 80, 80) end
     task.wait(1)
 end
@@ -42,7 +42,7 @@ Button.Draggable, Button.Active = true, true
 UICorner.CornerRadius = UDim.new(0, 12)
 
 local Running = true
-Button.Text = "TP MOB: ON"
+Button.Text = "Auto TP: ON"
 Button.BackgroundColor3 = Color3.fromRGB(0, 120, 255)
 
 -- Hàm kiểm tra xem quái có nằm trong danh sách đen không
@@ -97,6 +97,6 @@ end)
 
 Button.MouseButton1Click:Connect(function()
     Running = not Running
-    Button.Text = Running and "TP MOB: ON" or TP MOB: OFF"
+    Button.Text = Running and "Auto TP: ON" or "Auto TP: OFF"
     Button.BackgroundColor3 = Running and Color3.fromRGB(0, 120, 255) or Color3.fromRGB(150, 0, 0)
 end)
