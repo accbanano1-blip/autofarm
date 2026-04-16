@@ -1,0 +1,216 @@
+local ScreenGui = Instance.new("ScreenGui")
+local MainFrame = Instance.new("Frame")
+local OpenButton = Instance.new("TextButton")
+local FloatControlFrame = Instance.new("Frame")
+
+-- Cấu hình ScreenGui
+ScreenGui.Parent = game.CoreGui
+ScreenGui.Name = "Noclip_Fix_v19"
+ScreenGui.ResetOnSpawn = false
+
+-- --- MENU CHÍNH ---
+MainFrame.Name = "MainFrame"
+MainFrame.Parent = ScreenGui
+MainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+MainFrame.Active = true
+MainFrame.Draggable = true 
+MainFrame.Visible = true 
+MainFrame.Position = UDim2.new(0.5, -160, 0.5, -150) 
+MainFrame.Size = UDim2.new(0, 320, 0, 240) 
+Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 10)
+
+local GridLayout = Instance.new("UIGridLayout", MainFrame)
+GridLayout.CellSize = UDim2.new(0, 145, 0, 35)
+GridLayout.CellPadding = UDim2.new(0, 10, 0, 10)
+GridLayout.SortOrder = Enum.SortOrder.LayoutOrder
+
+local FramePadding = Instance.new("UIPadding", MainFrame)
+FramePadding.PaddingTop = UDim.new(0, 15) 
+FramePadding.PaddingLeft = UDim.new(0, 10)
+FramePadding.PaddingRight = UDim.new(0, 10)
+
+-- --- CỤM NÚT FLOAT NHỎ GỌN (VỊ TRÍ TRÊN CAO) ---
+FloatControlFrame.Name = "FloatControl"
+FloatControlFrame.Parent = ScreenGui
+FloatControlFrame.Size = UDim2.new(0, 40, 0, 90)
+-- Vị trí: Đưa lên trên cùng, gần thanh công cụ phía trên bên phải
+FloatControlFrame.Position = UDim2.new(1, -60, 0, 50) 
+FloatControlFrame.BackgroundTransparency = 1
+FloatControlFrame.Visible = false 
+
+local function createSmallBtn(text, pos, color, parent)
+    local b = Instance.new("TextButton", parent)
+    b.Text = text
+    b.Size = UDim2.new(1, 0, 0, 35) -- Kích thước nhỏ lại
+    b.Position = pos
+    b.BackgroundColor3 = color
+    b.TextColor3 = Color3.new(1,1,1)
+    b.Font = Enum.Font.SourceSansBold
+    b.TextSize = 18
+    b.Active = false 
+    b.Draggable = false 
+    Instance.new("UICorner", b).CornerRadius = UDim.new(0, 5)
+    return b
+end
+
+local UpBtn = createSmallBtn("▲", UDim2.new(0, 0, 0, 0), Color3.fromRGB(0, 150, 255), FloatControlFrame)
+local DownBtn = createSmallBtn("▼", UDim2.new(0, 0, 0, 45), Color3.fromRGB(255, 100, 0), FloatControlFrame)
+
+-- Nút MENU Bật/Tắt
+OpenButton.Parent = ScreenGui
+OpenButton.Size = UDim2.new(0, 80, 0, 35)
+OpenButton.Position = UDim2.new(0, 10, 0, 10)
+OpenButton.Text = "MENU"
+OpenButton.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+OpenButton.TextColor3 = Color3.new(1,1,1)
+OpenButton.Active = true
+OpenButton.Draggable = true
+Instance.new("UICorner", OpenButton)
+
+OpenButton.MouseButton1Click:Connect(function() MainFrame.Visible = not MainFrame.Visible end)
+
+-- BIẾN HỆ THỐNG
+local player = game.Players.LocalPlayer
+local RunService = game:GetService("RunService")
+local speedOn, noclipOn, floatOn, slOn = false, false, false, false
+local savedPos, plate, floatHeight = nil, nil, 0
+
+local function createGridBtn(text, color, layoutOrder)
+    local b = Instance.new("TextButton", MainFrame)
+    b.Text = text
+    b.BackgroundColor3 = color
+    b.TextColor3 = Color3.new(1,1,1)
+    b.LayoutOrder = layoutOrder
+    Instance.new("UICorner", b).CornerRadius = UDim.new(0, 8)
+    return b
+end
+
+-- CÁC CHỨC NĂNG
+createGridBtn("SET", Color3.fromRGB(200, 0, 0), 1).MouseButton1Click:Connect(function()
+    if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then savedPos = player.Character.HumanoidRootPart.CFrame end
+end)
+
+createGridBtn("TP", Color3.fromRGB(0, 150, 0), 2).MouseButton1Click:Connect(function()
+    if savedPos and player.Character then player.Character.HumanoidRootPart.CFrame = savedPos end
+end)
+
+local SpeedFrame = Instance.new("Frame", MainFrame)
+SpeedFrame.BackgroundTransparency = 1
+SpeedFrame.LayoutOrder = 3
+local SpeedInput = Instance.new("TextBox", SpeedFrame)
+SpeedInput.PlaceholderText = "Tốc độ..."
+SpeedInput.Size = UDim2.new(1, 0, 1, 0)
+SpeedInput.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+SpeedInput.TextColor3 = Color3.new(1,1,1)
+Instance.new("UICorner", SpeedInput)
+
+local SpeedBtn = createGridBtn("Speed: OFF", Color3.fromRGB(70, 70, 70), 4)
+SpeedBtn.MouseButton1Click:Connect(function()
+    speedOn = not speedOn
+    SpeedBtn.Text = speedOn and "Speed: ON" or "Speed: OFF"
+    SpeedBtn.BackgroundColor3 = speedOn and Color3.fromRGB(0, 100, 200) or Color3.fromRGB(70, 70, 70)
+end)
+
+local GotoFrame = Instance.new("Frame", MainFrame)
+GotoFrame.BackgroundTransparency = 1
+GotoFrame.LayoutOrder = 5
+local GotoInput = Instance.new("TextBox", GotoFrame)
+GotoInput.PlaceholderText = "Tên..."
+GotoInput.Size = UDim2.new(1, 0, 1, 0)
+GotoInput.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+GotoInput.TextColor3 = Color3.new(1,1,1)
+Instance.new("UICorner", GotoInput)
+
+createGridBtn("GOTO", Color3.fromRGB(100, 0, 200), 6).MouseButton1Click:Connect(function()
+    local t = GotoInput.Text:lower()
+    for _, v in pairs(game.Players:GetPlayers()) do
+        if v ~= player and (v.Name:lower():find(t) or v.DisplayName:lower():find(t)) then
+            player.Character.HumanoidRootPart.CFrame = v.Character.HumanoidRootPart.CFrame
+            break
+        end
+    end
+end)
+
+-- NOCLIP FIX (Nút bấm)
+local NoclipBtn = createGridBtn("Noclip: OFF", Color3.fromRGB(70, 70, 70), 7)
+NoclipBtn.MouseButton1Click:Connect(function()
+    noclipOn = not noclipOn
+    NoclipBtn.Text = noclipOn and "Noclip: ON" or "Noclip: OFF"
+    NoclipBtn.BackgroundColor3 = noclipOn and Color3.fromRGB(0, 100, 200) or Color3.fromRGB(70, 70, 70)
+end)
+
+local FloatBtn = createGridBtn("Float: OFF", Color3.fromRGB(70, 70, 70), 8)
+FloatBtn.MouseButton1Click:Connect(function()
+    floatOn = not floatOn
+    FloatBtn.Text = floatOn and "Float: ON" or "Float: OFF"
+    FloatBtn.BackgroundColor3 = floatOn and Color3.fromRGB(0, 100, 200) or Color3.fromRGB(70, 70, 70)
+    FloatControlFrame.Visible = floatOn 
+    
+    if floatOn and player.Character:FindFirstChild("HumanoidRootPart") then
+        floatHeight = player.Character.HumanoidRootPart.Position.Y - 3.5
+    elseif plate then
+        plate:Destroy() plate = nil
+    end
+end)
+
+UpBtn.MouseButton1Click:Connect(function() if floatOn then floatHeight = floatHeight + 2 end end)
+DownBtn.MouseButton1Click:Connect(function() if floatOn then floatHeight = floatHeight - 2 end end)
+
+createGridBtn("Shiftlock: OFF", Color3.fromRGB(70, 70, 70), 9).MouseButton1Click:Connect(function(obj)
+    slOn = not slOn
+    obj.Text = slOn and "Shiftlock: ON" or "Shiftlock: OFF"
+    obj.BackgroundColor3 = slOn and Color3.fromRGB(100, 0, 150) or Color3.fromRGB(70, 70, 70)
+end)
+
+createGridBtn("TP TOOL", Color3.fromRGB(70, 70, 70), 10).MouseButton1Click:Connect(function()
+    local tool = Instance.new("Tool", player.Backpack)
+    tool.Name = "TP Tool"
+    tool.RequiresHandle = false
+    tool.Activated:Connect(function() player.Character.HumanoidRootPart.CFrame = CFrame.new(player:GetMouse().Hit.p) + Vector3.new(0, 3, 0) end)
+end)
+
+-- --- VÒNG LẶP XỬ LÝ CHÍNH (FIX LỖI NOCLIP TẠI ĐÂY) ---
+RunService.Stepped:Connect(function()
+    if not player.Character then return end
+    
+    -- Fix Noclip: Ép xuyên tường liên tục mỗi khi engine vật lý chạy
+    if noclipOn then
+        for _, v in pairs(player.Character:GetDescendants()) do
+            if v:IsA("BasePart") and v.CanCollide == true then
+                v.CanCollide = false
+            end
+        end
+    end
+end)
+
+RunService.RenderStepped:Connect(function()
+    local char = player.Character
+    if not char or not char:FindFirstChild("HumanoidRootPart") then return end
+    local hrp = char.HumanoidRootPart
+    local hum = char:FindFirstChild("Humanoid")
+
+    -- Speed
+    if hum then hum.WalkSpeed = speedOn and (tonumber(SpeedInput.Text) or 16) or 16 end
+
+    -- Float
+    if floatOn then
+        if not plate or plate.Parent ~= workspace then
+            plate = Instance.new("Part", workspace)
+            plate.Size = Vector3.new(15, 1, 15)
+            plate.Anchored = true
+            plate.Transparency = 0.7
+            plate.BrickColor = BrickColor.new("Cyan")
+        end
+        plate.CFrame = CFrame.new(hrp.Position.X, floatHeight, hrp.Position.Z)
+    end
+
+    -- Shiftlock
+    if slOn and hum then
+        hum.AutoRotate = false
+        hum.CameraOffset = Vector3.new(1.7, 0, 0)
+        hrp.CFrame = CFrame.new(hrp.Position, hrp.Position + Vector3.new(workspace.CurrentCamera.CFrame.LookVector.X, 0, workspace.CurrentCamera.CFrame.LookVector.Z))
+    elseif hum then
+        hum.AutoRotate = true
+        hum.CameraOffset = Vector3.new(0, 0, 0)
+    end
+end)
