@@ -1,15 +1,15 @@
 -- XÓA GUI CŨ NẾU CÓ
 local player = game:GetService("Players").LocalPlayer
 local pgui = player:WaitForChild("PlayerGui")
-if pgui:FindFirstChild("SimpleTP_V4") then pgui.SimpleTP_V4:Destroy() end
+if pgui:FindFirstChild("SimpleTP_V5") then pgui.SimpleTP_V5:Destroy() end
 
 -- TẠO SCREEN GUI
 local sg = Instance.new("ScreenGui")
-sg.Name = "SimpleTP_V4"
+sg.Name = "SimpleTP_V5"
 sg.Parent = pgui
 sg.ResetOnSpawn = false
 
--- 1. NÚT MỞ/ĐÓNG (MÀU XANH)
+-- 1. NÚT MỞ/ĐÓNG MENU (MÀU XANH)
 local Toggle = Instance.new("TextButton")
 Toggle.Name = "Toggle"
 Toggle.Parent = sg
@@ -21,19 +21,197 @@ Toggle.Font = Enum.Font.SourceSansBold
 Toggle.TextSize = 14
 Toggle.Draggable = true
 Toggle.Active = true
-
-local CornerT = Instance.new("UICorner")
+local CornerT = Instance.new("UICorner", Toggle)
 CornerT.CornerRadius = UDim.new(1, 0)
-CornerT.Parent = Toggle
 
--- 2. KHUNG MENU CHÍNH (Tăng size để chứa Speed)
+-- 2. KHUNG MENU CHÍNH
 local Main = Instance.new("Frame")
 Main.Name = "Main"
 Main.Parent = sg
-Main.Size = UDim2.new(0, 180, 0, 180) -- Tăng chiều cao lên 180
+Main.Size = UDim2.new(0, 180, 0, 210) -- Tăng chiều cao để chứa nút Speed Toggle
 Main.Position = UDim2.new(0.5, -90, 0.4, 0)
 Main.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
 Main.Visible = true
+Main.Draggable = true
+Main.Active = true
+local CornerM = Instance.new("UICorner", Main)
+
+-- LOGIC ẨN HIỆN MENU
+Toggle.MouseButton1Click:Connect(function()
+    Main.Visible = not Main.Visible
+end)
+
+-- HÀM TẠO NÚT NHANH
+local function create(name, text, pos, size, color)
+    local b = Instance.new("TextButton")
+    b.Name = name
+    b.Text = text
+    b.Position = pos
+    b.Size = size
+    b.BackgroundColor3 = color
+    b.TextColor3 = Color3.fromRGB(255, 255, 255)
+    b.Font = Enum.Font.SourceSansBold
+    b.TextSize = 14
+    b.Parent = Main
+    local c = Instance.new("UICorner", b)
+    c.CornerRadius = UDim.new(0, 6)
+    return b
+end
+
+local SetB = create("Set", "SET", UDim2.new(0.05, 0, 0.05, 0), UDim2.new(0, 65, 0, 40), Color3.fromRGB(200, 50, 50))
+local TpB = create("Tp", "TP", UDim2.new(0.05, 0, 0.28, 0), UDim2.new(0, 65, 0, 40), Color3.fromRGB(50, 180, 50))
+local FloatB = create("Float", "FLOAT: OFF", UDim2.new(0.42, 0, 0.05, 0), UDim2.new(0, 65, 0, 85), Color3.fromRGB(60, 60, 60))
+local UpB = create("Up", "▲", UDim2.new(0.8, 0, 0.05, 0), UDim2.new(0, 30, 0, 40), Color3.fromRGB(100, 100, 100))
+local DownB = create("Down", "▼", UDim2.new(0.8, 0, 0.28, 0), UDim2.new(0, 30, 0, 40), Color3.fromRGB(100, 100, 100))
+
+-----------------------------------------------------------
+-- LOGIC SPEED + TOGGLE + SLIDER
+-----------------------------------------------------------
+local speedEnabled = false
+local currentSpeedValue = 16
+
+local SpeedToggleBtn = create("SpeedToggle", "SPEED: OFF", UDim2.new(0.05, 0, 0.52, 0), UDim2.new(0, 162, 0, 30), Color3.fromRGB(80, 80, 80))
+
+local SpeedLabel = Instance.new("TextLabel", Main)
+SpeedLabel.Text = "Value: 16"
+SpeedLabel.Position = UDim2.new(0.05, 0, 0.68, 0)
+SpeedLabel.Size = UDim2.new(0, 162, 0, 20)
+SpeedLabel.BackgroundTransparency = 1
+SpeedLabel.TextColor3 = Color3.new(1,1,1)
+SpeedLabel.Font = Enum.Font.SourceSansBold
+SpeedLabel.TextSize = 12
+
+local SliderFrame = Instance.new("Frame", Main)
+SliderFrame.Size = UDim2.new(0.9, 0, 0, 10)
+SliderFrame.Position = UDim2.new(0.05, 0, 0.82, 0)
+SliderFrame.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+
+local SliderInner = Instance.new("Frame", SliderFrame)
+SliderInner.Size = UDim2.new(0, 0, 1, 0)
+SliderInner.BackgroundColor3 = Color3.fromRGB(0, 200, 255)
+SliderInner.BorderSizePixel = 0
+
+local SliderBtn = Instance.new("TextButton", SliderFrame)
+SliderBtn.Size = UDim2.new(1, 0, 1, 0)
+SliderBtn.BackgroundTransparency = 1
+SliderBtn.Text = ""
+
+-- Hàm cập nhật tốc độ thực tế
+local function applySpeed()
+    if player.Character and player.Character:FindFirstChild("Humanoid") then
+        if speedEnabled then
+            player.Character.Humanoid.WalkSpeed = currentSpeedValue
+        else
+            player.Character.Humanoid.WalkSpeed = 16
+        end
+    end
+end
+
+-- Logic Nút Bật/Tắt
+SpeedToggleBtn.MouseButton1Click:Connect(function()
+    speedEnabled = not speedEnabled
+    if speedEnabled then
+        SpeedToggleBtn.Text = "SPEED: ON"
+        SpeedToggleBtn.BackgroundColor3 = Color3.fromRGB(0, 180, 50)
+    else
+        SpeedToggleBtn.Text = "SPEED: OFF"
+        SpeedToggleBtn.BackgroundColor3 = Color3.fromRGB(80, 80, 80)
+    end
+    applySpeed()
+end)
+
+-- Logic Slider
+local function updateSlider(input)
+    local pos = math.clamp((input.Position.X - SliderFrame.AbsolutePosition.X) / SliderFrame.AbsoluteSize.X, 0, 1)
+    SliderInner.Size = UDim2.new(pos, 0, 1, 0)
+    currentSpeedValue = math.floor(pos * 300)
+    if currentSpeedValue < 16 then currentSpeedValue = 16 end
+    SpeedLabel.Text = "Value: " .. currentSpeedValue
+    if speedEnabled then applySpeed() end
+end
+
+local dragging = false
+SliderBtn.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        dragging = true
+    end
+end)
+game:GetService("UserInputService").InputChanged:Connect(function(input)
+    if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+        updateSlider(input)
+    end
+end)
+game:GetService("UserInputService").InputEnded:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        dragging = false
+    end
+end)
+
+-----------------------------------------------------------
+-- LOGIC TP & FLOAT (Giữ nguyên)
+-----------------------------------------------------------
+local savedPos = nil
+local floating = false
+local floatPart = nil
+
+game:GetService("RunService").RenderStepped:Connect(function()
+    if floating and floatPart and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+        local root = player.Character.HumanoidRootPart
+        floatPart.CFrame = CFrame.new(root.Position.X, floatPart.Position.Y, root.Position.Z)
+    end
+    -- Duy trì speed khi hồi sinh hoặc thay đổi trạng thái
+    applySpeed()
+end)
+
+FloatB.MouseButton1Click:Connect(function()
+    local char = player.Character
+    if not char or not char:FindFirstChild("HumanoidRootPart") then return end
+    floating = not floating
+    if floating then
+        floatPart = Instance.new("Part", char)
+        floatPart.Size = Vector3.new(6, 0.5, 6)
+        floatPart.Anchored = true
+        floatPart.CanCollide = true
+        floatPart.Transparency = 0.5
+        floatPart.Color = Color3.fromRGB(0, 255, 255)
+        floatPart.CFrame = char.HumanoidRootPart.CFrame * CFrame.new(0, -3.5, 0)
+        FloatB.Text = "ON"
+        FloatB.BackgroundColor3 = Color3.fromRGB(0, 150, 255)
+    else
+        if floatPart then floatPart:Destroy() floatPart = nil end
+        FloatB.Text = "OFF"
+        FloatB.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+    end
+end)
+
+UpB.MouseButton1Click:Connect(function()
+    if floating and floatPart then
+        floatPart.CFrame *= CFrame.new(0, 2, 0)
+        player.Character.HumanoidRootPart.CFrame *= CFrame.new(0, 2, 0)
+    end
+end)
+
+DownB.MouseButton1Click:Connect(function()
+    if floating and floatPart then
+        floatPart.CFrame *= CFrame.new(0, -2, 0)
+        player.Character.HumanoidRootPart.CFrame *= CFrame.new(0, -2, 0)
+    end
+end)
+
+SetB.MouseButton1Click:Connect(function()
+    if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+        savedPos = player.Character.HumanoidRootPart.CFrame
+        SetB.Text = "SAVED"
+        task.wait(0.5)
+        SetB.Text = "SET"
+    end
+end)
+
+TpB.MouseButton1Click:Connect(function()
+    if savedPos and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+        player.Character.HumanoidRootPart.CFrame = savedPos
+    end
+end)
 Main.Draggable = true
 Main.Active = true
 
