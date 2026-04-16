@@ -1,39 +1,210 @@
--- SimpleTP V4.5 (Enhanced Edition)
-local player = game:GetService("Players").LocalPlayer
-local pgui = player:WaitForChild("PlayerGui")
+-- SimpleTP V4.5 Clean Version
+local players = game:GetService("Players")
 local runService = game:GetService("RunService")
 local uis = game:GetService("UserInputService")
 
--- XÓA GUI CŨ
-if pgui:FindFirstChild("SimpleTP_V4") then pgui.SimpleTP_V4:Destroy() end
+local player = players.LocalPlayer
+local pgui = player:WaitForChild("PlayerGui")
 
--- TẠO SCREEN GUI
-local sg = Instance.new("ScreenGui")
+-- 1. XÓA GUI CŨ
+local oldGui = pgui:FindFirstChild("SimpleTP_V4")
+if oldGui then oldGui:Destroy() end
+
+-- 2. TẠO GIAO DIỆN CHÍNH
+local sg = Instance.new("ScreenGui", pgui)
 sg.Name = "SimpleTP_V4"
-sg.Parent = pgui
 sg.ResetOnSpawn = false
 
--- 1. NÚT MỞ/ĐÓNG (MÀU XANH)
-local Toggle = Instance.new("TextButton")
-Toggle.Name = "Toggle"
-Toggle.Parent = sg
+local Main = Instance.new("Frame", sg)
+Main.Size = UDim2.new(0, 200, 0, 380)
+Main.Position = UDim2.new(0.5, -100, 0.4, -190)
+Main.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+Main.Active = true
+Main.Draggable = true
+Instance.new("UICorner", Main)
+
+local Toggle = Instance.new("TextButton", sg)
 Toggle.Size = UDim2.new(0, 55, 0, 55)
 Toggle.Position = UDim2.new(0, 10, 0.5, -27)
 Toggle.BackgroundColor3 = Color3.fromRGB(0, 200, 100)
 Toggle.Text = "MENU"
 Toggle.TextColor3 = Color3.new(1,1,1)
 Toggle.Font = Enum.Font.SourceSansBold
-Toggle.TextSize = 14
 Toggle.Draggable = true
-Toggle.Active = true
 Instance.new("UICorner", Toggle).CornerRadius = UDim.new(1, 0)
 
--- 2. KHUNG MENU CHÍNH (Mở rộng kích thước lên 200x380)
-local Main = Instance.new("Frame")
-Main.Name = "Main"
-Main.Parent = sg
-Main.Size = UDim2.new(0, 200, 0, 380) 
-Main.Position = UDim2.new(0.5, -100, 0.4, -190)
+Toggle.MouseButton1Click:Connect(function() Main.Visible = not Main.Visible end)
+
+-- 3. BIẾN TRẠNG THÁI (STATE)
+local state = {
+    savedPos = nil,
+    floating = false,
+    floatPart = nil,
+    noclip = false,
+    infJump = false,
+    speedActive = false,
+    speed = 16,
+    jump = 50
+}
+
+-- 4. HÀM TẠO NÚT NHANH
+local function btn(text, pos, size, color, parent)
+    local b = Instance.new("TextButton", parent or Main)
+    b.Text = text
+    b.Position = pos
+    b.Size = size
+    b.BackgroundColor3 = color
+    b.TextColor3 = Color3.new(1,1,1)
+    b.Font = Enum.Font.SourceSansBold
+    Instance.new("UICorner", b)
+    return b
+end
+
+-- 5. KHỞI TẠO CÁC NÚT
+local SetB = btn("SET POS", UDim2.new(0.05, 0, 0.1, 0), UDim2.new(0, 90, 0, 35), Color3.fromRGB(200, 50, 50))
+local TpB = btn("TP TO", UDim2.new(0.52, 0, 0.1, 0), UDim2.new(0, 90, 0, 35), Color3.fromRGB(50, 180, 50))
+local FloatB = btn("FLOAT: OFF", UDim2.new(0.05, 0, 0.21, 0), UDim2.new(0, 130, 0, 35), Color3.fromRGB(60, 60, 60))
+local UpB = btn("▲", UDim2.new(0.72, 0, 0.21, 0), UDim2.new(0, 22, 0, 35), Color3.fromRGB(100, 100, 100))
+local DownB = btn("▼", UDim2.new(0.85, 0, 0.21, 0), UDim2.new(0, 22, 0, 35), Color3.fromRGB(100, 100, 100))
+local NcB = btn("NOCLIP: OFF", UDim2.new(0.05, 0, 0.32, 0), UDim2.new(0, 90, 0, 35), Color3.fromRGB(80, 40, 120))
+local JpB = btn("INF JUMP: OFF", UDim2.new(0.52, 0, 0.32, 0), UDim2.new(0, 90, 0, 35), Color3.fromRGB(120, 80, 0))
+local SpeedToggle = btn("ACTIVATE SPEED: OFF", UDim2.new(0.05, 0, 0.58, 0), UDim2.new(0, 180, 0, 35), Color3.fromRGB(100, 100, 100))
+
+-- 6. HÀM SLIDER (DÙNG CHUNG)
+local function createSlider(yPos, labelText, maxVal, callback)
+    local lbl = Instance.new("TextLabel", Main)
+    lbl.Size = UDim2.new(1, 0, 0, 20)
+    lbl.Position = UDim2.new(0, 0, yPos, 0)
+    lbl.BackgroundTransparency = 1
+    lbl.TextColor3 = Color3.new(1,1,1)
+    lbl.Text = labelText .. ": 0"
+    
+    local frame = Instance.new("Frame", Main)
+    frame.Size = UDim2.new(0.9, 0, 0, 10)
+    frame.Position = UDim2.new(0.05, 0, yPos + 0.07, 0)
+    frame.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+    
+    local inner = Instance.new("Frame", frame)
+    inner.Size = UDim2.new(0.1, 0, 1, 0)
+    inner.BackgroundColor3 = Color3.fromRGB(0, 255, 100)
+    
+    local btnSlide = Instance.new("TextButton", frame)
+    btnSlide.Size = UDim2.new(1, 0, 1, 0)
+    btnSlide.BackgroundTransparency = 1
+    btnSlide.Text = ""
+
+    local dragging = false
+    btnSlide.InputBegan:Connect(function(i) if i.UserInputType == Enum.UserInputType.MouseButton1 then dragging = true end end)
+    uis.InputEnded:Connect(function(i) if i.UserInputType == Enum.UserInputType.MouseButton1 then dragging = false end end)
+    uis.InputChanged:Connect(function(i)
+        if dragging and i.UserInputType == Enum.UserInputType.MouseMovement then
+            local p = math.clamp((i.Position.X - frame.AbsolutePosition.X) / frame.AbsoluteSize.X, 0, 1)
+            inner.Size = UDim2.new(p, 0, 1, 0)
+            local val = math.floor(p * maxVal)
+            lbl.Text = labelText .. ": " .. val
+            callback(val)
+        end
+    end)
+end
+
+createSlider(0.45, "Speed", 500, function(v) state.speed = v end)
+createSlider(0.70, "Jump", 500, function(v) state.jump = v end)
+
+-- 7. LOGIC XỬ LÝ CHÍNH (GOM VÀO 1 LOOP)
+runService.RenderStepped:Connect(function()
+    local char = player.Character
+    if not char then return end
+    local hum = char:FindFirstChildOfClass("Humanoid")
+    local root = char:FindFirstChild("HumanoidRootPart")
+    
+    if hum and root then
+        -- Speed & Jump
+        if state.speedActive then hum.WalkSpeed = state.speed else hum.WalkSpeed = 16 end
+        hum.JumpPower = state.jump
+        hum.UseJumpPower = true
+        
+        -- Float
+        if state.floating and state.floatPart then
+            state.floatPart.CFrame = CFrame.new(root.Position.X, state.floatPart.Position.Y, root.Position.Z)
+        end
+        
+        -- Noclip
+        if state.noclip then
+            for _, p in pairs(char:GetDescendants()) do
+                if p:IsA("BasePart") then p.CanCollide = false end
+            end
+        end
+    end
+end)
+
+-- 8. SỰ KIỆN CÁC NÚT
+SetB.MouseButton1Click:Connect(function()
+    local root = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+    if root then state.savedPos = root.CFrame end
+end)
+
+TpB.MouseButton1Click:Connect(function()
+    local root = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+    if root and state.savedPos then root.CFrame = state.savedPos end
+end)
+
+FloatB.MouseButton1Click:Connect(function()
+    state.floating = not state.floating
+    if state.floating then
+        local root = player.Character.HumanoidRootPart
+        state.floatPart = Instance.new("Part", player.Character)
+        state.floatPart.Size, state.floatPart.Anchored = Vector3.new(6, 0.5, 6), true
+        state.floatPart.Transparency, state.floatPart.Color = 0.5, Color3.new(0, 1, 1)
+        state.floatPart.CFrame = root.CFrame * CFrame.new(0, -3.5, 0)
+        FloatB.Text, FloatB.BackgroundColor3 = "FLOAT: ON", Color3.fromRGB(0, 150, 255)
+    else
+        if state.floatPart then state.floatPart:Destroy() end
+        FloatB.Text, FloatB.BackgroundColor3 = "FLOAT: OFF", Color3.fromRGB(60, 60, 60)
+    end
+end)
+
+UpB.MouseButton1Click:Connect(function() 
+    if state.floatPart then 
+        state.floatPart.CFrame *= CFrame.new(0, 5, 0) 
+        player.Character.HumanoidRootPart.CFrame *= CFrame.new(0, 5, 0) 
+    end 
+end)
+
+DownB.MouseButton1Click:Connect(function() 
+    if state.floatPart then 
+        state.floatPart.CFrame *= CFrame.new(0, -5, 0) 
+        player.Character.HumanoidRootPart.CFrame *= CFrame.new(0, -5, 0) 
+    end 
+end)
+
+NcB.MouseButton1Click:Connect(function()
+    state.noclip = not state.noclip
+    NcB.Text = state.noclip and "NOCLIP: ON" or "NOCLIP: OFF"
+    NcB.BackgroundColor3 = state.noclip and Color3.new(0, 1, 0) or Color3.fromRGB(80, 40, 120)
+end)
+
+JpB.MouseButton1Click:Connect(function()
+    state.infJump = not state.infJump
+    JpB.Text = state.infJump and "INF JUMP: ON" or "INF JUMP: OFF"
+    JpB.BackgroundColor3 = state.infJump and Color3.new(0, 1, 0) or Color3.fromRGB(120, 80, 0)
+end)
+
+uis.JumpRequest:Connect(function()
+    if state.infJump and player.Character then
+        local hum = player.Character:FindFirstChildOfClass("Humanoid")
+        if hum then hum:ChangeState("Jumping") end
+    end
+end)
+
+SpeedToggle.MouseButton1Click:Connect(function()
+    state.speedActive = not state.speedActive
+    SpeedToggle.Text = state.speedActive and "SPEED: ON" or "SPEED: OFF"
+    SpeedToggle.BackgroundColor3 = state.speedActive and Color3.new(0, 0.7, 0) or Color3.new(0.4, 0.4, 0.4)
+end)
+
+btn("RESET CHARACTER", UDim2.new(0.05, 0, 0.85, 0), UDim2.new(0, 180, 0, 35), Color3.new(0.2, 0.2, 0.2)).MouseButton1Click:Connect(function()
+    if player.Character then player.Character:BreakJoints() end
+end)
 Main.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
 Main.Visible = true
 Main.Draggable = true
