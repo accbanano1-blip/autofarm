@@ -1,104 +1,102 @@
--- 1. QUÉT SẠCH TẤT CẢ GUI CŨ (QUAN TRỌNG)
+-- 1. XÓA TẤT CẢ GUI CŨ (TRÁNH CHỒNG LẤY NHƯ TRONG ẢNH)
 local player = game:GetService("Players").LocalPlayer
 local pgui = player:WaitForChild("PlayerGui")
 
-for _, oldGui in pairs(pgui:GetChildren()) do
-    if oldGui.Name:match("SimpleTP") then
-        oldGui:Destroy()
-    end
+for _, old in pairs(pgui:GetChildren()) do
+    if old.Name:match("SimpleTP") then old:Destroy() end
 end
 
--- 2. TẠO GUI MỚI
+-- 2. TẠO SCREEN GUI
 local sg = Instance.new("ScreenGui", pgui)
-sg.Name = "SimpleTP_V8_Final"
+sg.Name = "SimpleTP_V9_Clean"
 sg.ResetOnSpawn = false
 
 -- NÚT MENU (TRÒN)
 local Toggle = Instance.new("TextButton", sg)
 Toggle.Size = UDim2.new(0, 50, 0, 50)
 Toggle.Position = UDim2.new(0, 10, 0.4, 0)
-Toggle.BackgroundColor3 = Color3.fromRGB(0, 255, 127)
+Toggle.BackgroundColor3 = Color3.fromRGB(0, 255, 150)
 Toggle.Text = "MENU"
 Toggle.Font = Enum.Font.GothamBold
-Toggle.TextSize = 12
+Toggle.TextColor3 = Color3.new(1,1,1)
 Instance.new("UICorner", Toggle).CornerRadius = UDim.new(1, 0)
 Toggle.Draggable = true
 Toggle.Active = true
 
--- KHUNG CHÍNH
-local Main = Instance.new("Frame", sg)
-Main.Size = UDim2.new(0, 180, 0, 320)
-Main.Position = UDim2.new(0.5, -90, 0.3, 0)
-Main.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
-Main.BorderSizePixel = 0
+-- KHUNG CHÍNH (SỬ DỤNG SCROLLING ĐỂ CHỐNG TRÀN)
+local Main = Instance.new("ScrollingFrame", sg)
+Main.Size = UDim2.new(0, 200, 0, 280)
+Main.Position = UDim2.new(0.5, -100, 0.3, 0)
+Main.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+Main.CanvasSize = UDim2.new(0, 0, 1.2, 0) -- Cho phép cuộn nếu quá dài
+Main.ScrollBarThickness = 4
 Main.Visible = true
 Main.Draggable = true
 Main.Active = true
 Instance.new("UICorner", Main)
 
--- HỆ THỐNG TỰ SẮP XẾP (CHỐNG CHỒNG NÚT)
+-- TỰ ĐỘNG SẮP XẾP CÁC NÚT
 local layout = Instance.new("UIListLayout", Main)
-layout.SortOrder = Enum.SortOrder.LayoutOrder
-layout.Padding = UDim.new(0, 8)
+layout.Padding = UDim.new(0, 10)
 layout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+layout.SortOrder = Enum.SortOrder.LayoutOrder
 
--- LỀ TRÊN
-local Padding = Instance.new("UIPadding", Main)
-Padding.PaddingTop = UDim.new(0, 10)
+local pad = Instance.new("UIPadding", Main)
+pad.PaddingTop = UDim.new(0, 10)
 
--- HÀM TẠO NÚT SIÊU TỐC
-local function createBtn(text, color)
+-- HÀM TẠO NÚT CÔNG NGHIỆP
+local function createBtn(text, color, order)
     local b = Instance.new("TextButton", Main)
-    b.Size = UDim2.new(0, 160, 0, 35)
+    b.Size = UDim2.new(0, 170, 0, 40)
     b.BackgroundColor3 = color
     b.Text = text
     b.TextColor3 = Color3.new(1,1,1)
     b.Font = Enum.Font.GothamBold
     b.TextSize = 14
+    b.LayoutOrder = order
     Instance.new("UICorner", b)
     return b
 end
 
 -----------------------------------------------------------
--- TẠO CÁC NÚT THEO THỨ TỰ
+-- DANH SÁCH CHỨC NĂNG (THEO THỨ TỰ)
 -----------------------------------------------------------
-local ToolB = createBtn("TP TOOL (LẤY GẬY)", Color3.fromRGB(0, 120, 215))
-local SetB = createBtn("SET POSITION", Color3.fromRGB(180, 50, 50))
-local TpB = createBtn("TELEPORT NOW", Color3.fromRGB(50, 150, 50))
-local FloatB = createBtn("FLOAT: OFF", Color3.fromRGB(70, 70, 70))
+local ToolB = createBtn("TP TOOL (LẤY GẬY)", Color3.fromRGB(0, 120, 215), 1)
+local SetB = createBtn("LƯU VỊ TRÍ (SET)", Color3.fromRGB(180, 50, 50), 2)
+local TpB = createBtn("DỊCH CHUYỂN (TP)", Color3.fromRGB(50, 150, 50), 3)
+local FloatB = createBtn("BAY (FLOAT): OFF", Color3.fromRGB(60, 60, 60), 4)
 
--- KHU VỰC ĐIỀU CHỈNH SPEED
+-- Khu vực Speed
 local SpeedLabel = Instance.new("TextLabel", Main)
-SpeedLabel.Size = UDim2.new(0, 160, 0, 20)
-SpeedLabel.Text = "SPEED: 16"
+SpeedLabel.Size = UDim2.new(0, 170, 0, 25)
+SpeedLabel.Text = "TỐC ĐỘ: 16"
 SpeedLabel.TextColor3 = Color3.new(1,1,1)
 SpeedLabel.BackgroundTransparency = 1
-SpeedLabel.Font = Enum.Font.GothamBold
+SpeedLabel.LayoutOrder = 5
 
-local Slider = Instance.new("TextBox", Main)
-Slider.Size = UDim2.new(0, 160, 0, 30)
-Slider.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-Slider.Text = "Nhập speed (16-300)"
-Slider.TextColor3 = Color3.new(0.8, 0.8, 0.8)
-Slider.Font = Enum.Font.SourceSans
-Slider.TextSize = 14
-Instance.new("UICorner", Slider)
+local SpeedInput = Instance.new("TextBox", Main)
+SpeedInput.Size = UDim2.new(0, 170, 0, 35)
+SpeedInput.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+SpeedInput.Text = "Gõ số speed..."
+SpeedInput.TextColor3 = Color3.new(1,1,1)
+SpeedInput.LayoutOrder = 6
+Instance.new("UICorner", SpeedInput)
 
-local SpeedToggle = createBtn("BẬT TỐC ĐỘ: OFF", Color3.fromRGB(100, 100, 100))
+local SpeedToggle = createBtn("BẬT SPEED: OFF", Color3.fromRGB(100, 100, 100), 7)
 
 -----------------------------------------------------------
--- LOGIC (ĐÃ TỐI ƯU)
+-- LOGIC XỬ LÝ (GIỮ NGUYÊN TÍNH NĂNG CŨ)
 -----------------------------------------------------------
-local speedActive = false
-local currentSpeed = 16
+local speedOn = false
+local speedVal = 16
 local savedPos = nil
-local floating = false
-local floatPart = nil
+local isFloating = false
+local fPart = nil
 
--- TP Tool
+-- TP Tool Logic
 ToolB.MouseButton1Click:Connect(function()
     local t = Instance.new("Tool")
-    t.Name = "TP Tool"
+    t.Name = "Teleport Wand"
     t.RequiresHandle = false
     t.Activated:Connect(function()
         local m = player:GetMouse()
@@ -107,162 +105,54 @@ ToolB.MouseButton1Click:Connect(function()
         end
     end)
     t.Parent = player.Backpack
+    ToolB.Text = "ĐÃ LẤY TOOL!"
+    task.wait(1)
+    ToolB.Text = "TP TOOL (LẤY GẬY)"
 end)
 
 -- Speed Logic
-Slider.FocusLost:Connect(function()
-    local val = tonumber(Slider.Text)
-    if val then
-        currentSpeed = math.clamp(val, 16, 300)
-        SpeedLabel.Text = "SPEED: "..currentSpeed
-    else
-        Slider.Text = "Nhập số!"
-    end
+SpeedInput.FocusLost:Connect(function()
+    local n = tonumber(SpeedInput.Text)
+    if n then speedVal = n SpeedLabel.Text = "TỐC ĐỘ: "..n else SpeedInput.Text = "Gõ số!" end
 end)
 
 SpeedToggle.MouseButton1Click:Connect(function()
-    speedActive = not speedActive
-    SpeedToggle.Text = speedActive and "BẬT TỐC ĐỘ: ON" or "BẬT TỐC ĐỘ: OFF"
-    SpeedToggle.BackgroundColor3 = speedActive and Color3.fromRGB(0, 180, 80) or Color3.fromRGB(100, 100, 100)
+    speedOn = not speedOn
+    SpeedToggle.Text = speedOn and "BẬT SPEED: ON" or "BẬT SPEED: OFF"
+    SpeedToggle.BackgroundColor3 = speedOn and Color3.fromRGB(0, 180, 80) or Color3.fromRGB(100, 100, 100)
 end)
 
--- Loop duy trì
 game:GetService("RunService").RenderStepped:Connect(function()
-    local hum = player.Character and player.Character:FindFirstChild("Humanoid")
-    if hum then hum.WalkSpeed = speedActive and currentSpeed or 16 end
+    if speedOn and player.Character and player.Character:FindFirstChild("Humanoid") then
+        player.Character.Humanoid.WalkSpeed = speedVal
+    elseif not speedOn and player.Character and player.Character:FindFirstChild("Humanoid") then
+        player.Character.Humanoid.WalkSpeed = 16
+    end
     
-    if floating and floatPart and player.Character:FindFirstChild("HumanoidRootPart") then
-        floatPart.CFrame = CFrame.new(player.Character.HumanoidRootPart.Position.X, floatPart.Position.Y, player.Character.HumanoidRootPart.Position.Z)
+    if isFloating and fPart and player.Character:FindFirstChild("HumanoidRootPart") then
+        fPart.CFrame = CFrame.new(player.Character.HumanoidRootPart.Position.X, fPart.Position.Y, player.Character.HumanoidRootPart.Position.Z)
     end
 end)
 
--- Các nút còn lại
+-- Float/Set/TP
 FloatB.MouseButton1Click:Connect(function()
-    floating = not floating
-    if floating then
-        floatPart = Instance.new("Part", player.Character)
-        floatPart.Size = Vector3.new(7, 0.5, 7)
-        floatPart.Anchored = true
-        floatPart.CFrame = player.Character.HumanoidRootPart.CFrame * CFrame.new(0,-3.5,0)
+    isFloating = not isFloating
+    if isFloating then
+        fPart = Instance.new("Part", player.Character)
+        fPart.Size = Vector3.new(7, 0.5, 7)
+        fPart.Anchored = true
+        fPart.CFrame = player.Character.HumanoidRootPart.CFrame * CFrame.new(0,-3.5,0)
         FloatB.Text = "FLOAT: ON"
-        FloatB.BackgroundColor3 = Color3.fromRGB(0, 150, 255)
     else
-        if floatPart then floatPart:Destroy() end
+        if fPart then fPart:Destroy() end
         FloatB.Text = "FLOAT: OFF"
-        FloatB.BackgroundColor3 = Color3.fromRGB(70, 70, 70)
     end
 end)
 
-SetB.MouseButton1Click:Connect(function() savedPos = player.Character.HumanoidRootPart.CFrame end)
+SetB.MouseButton1Click:Connect(function() savedPos = player.Character.HumanoidRootPart.CFrame SetB.Text = "ĐÃ LƯU!" task.wait(0.5) SetB.Text = "LƯU VỊ TRÍ (SET)" end)
 TpB.MouseButton1Click:Connect(function() if savedPos then player.Character.HumanoidRootPart.CFrame = savedPos end end)
 Toggle.MouseButton1Click:Connect(function() Main.Visible = not Main.Visible end)
-    b.Position = pos
-    b.Size = size
-    b.BackgroundColor3 = color
-    b.TextColor3 = Color3.new(1, 1, 1)
-    b.Font = Enum.Font.SourceSansBold
-    b.TextSize = 14
-    Instance.new("UICorner", b).CornerRadius = UDim.new(0, 8)
-    return b
-end
-
------------------------------------------------------------
--- PHÂN KHU CHỨC NĂNG (Đã chỉnh tọa độ chuẩn)
------------------------------------------------------------
-
--- Hàng 1: TP TOOL và FLOAT (Cách xa nhau)
-local TPToolBtn = create("TP TOOL (Lấy gậy)", UDim2.new(0.05, 0, 0.05, 0), UDim2.new(0, 110, 0, 45), Color3.fromRGB(0, 120, 200))
-local FloatB = create("FLOAT: OFF", UDim2.new(0.52, 0, 0.05, 0), UDim2.new(0, 110, 0, 45), Color3.fromRGB(60, 60, 60))
-
--- Hàng 2: SET POS và TELEPORT
-local SetB = create("SET POS", UDim2.new(0.05, 0, 0.23, 0), UDim2.new(0, 110, 0, 40), Color3.fromRGB(180, 50, 50))
-local TpB = create("TP ĐẾN ĐIỂM", UDim2.new(0.52, 0, 0.23, 0), UDim2.new(0, 110, 0, 40), Color3.fromRGB(50, 150, 50))
-
--- Hàng 3: ĐIỀU CHỈNH ĐỘ CAO (Dành cho Float)
-local UpB = create("BAY LÊN ▲", UDim2.new(0.05, 0, 0.38, 0), UDim2.new(0, 110, 0, 35), Color3.fromRGB(100, 100, 100))
-local DownB = create("HẠ XUỐNG ▼", UDim2.new(0.52, 0, 0.38, 0), UDim2.new(0, 110, 0, 35), Color3.fromRGB(100, 100, 100))
-
--- KHU VỰC SPEED (Dưới cùng, tách biệt hoàn toàn)
-local SpeedLabel = Instance.new("TextLabel", Main)
-SpeedLabel.Text = "CHỌN TỐC ĐỘ: 16"
-SpeedLabel.Position = UDim2.new(0, 0, 0.55, 0)
-SpeedLabel.Size = UDim2.new(1, 0, 0, 20)
-SpeedLabel.BackgroundTransparency = 1
-SpeedLabel.TextColor3 = Color3.new(1, 1, 1)
-SpeedLabel.Font = Enum.Font.SourceSansBold
-
-local SliderFrame = Instance.new("Frame", Main)
-SliderFrame.Size = UDim2.new(0.9, 0, 0, 12)
-SliderFrame.Position = UDim2.new(0.05, 0, 0.65, 0)
-SliderFrame.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-Instance.new("UICorner", SliderFrame)
-
-local SliderInner = Instance.new("Frame", SliderFrame)
-SliderInner.Size = UDim2.new(0, 0, 1, 0)
-SliderInner.BackgroundColor3 = Color3.fromRGB(0, 255, 100)
-SliderInner.BorderSizePixel = 0
-Instance.new("UICorner", SliderInner)
-
-local SliderBtn = Instance.new("TextButton", SliderFrame)
-SliderBtn.Size = UDim2.new(1, 0, 1, 0)
-SliderBtn.BackgroundTransparency = 1
-SliderBtn.Text = ""
-
-local SpeedToggle = create("BẬT TỐC ĐỘ: OFF", UDim2.new(0.05, 0, 0.78, 0), UDim2.new(0, 235, 0, 45), Color3.fromRGB(80, 80, 80))
-
------------------------------------------------------------
--- LOGIC XỬ LÝ
------------------------------------------------------------
-local speedActive = false
-local currentSpeed = 16
-local savedPos = nil
-local floating = false
-local floatPart = nil
-
--- TP Tool
-TPToolBtn.MouseButton1Click:Connect(function()
-    local tool = Instance.new("Tool")
-    tool.Name = "Teleport Tool"
-    tool.RequiresHandle = false
-    tool.Activated:Connect(function()
-        local mouse = player:GetMouse()
-        if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-            player.Character.HumanoidRootPart.CFrame = CFrame.new(mouse.Hit.Position + Vector3.new(0, 3, 0))
-        end
-    end)
-    tool.Parent = player.Backpack
-    TPToolBtn.Text = "ĐÃ LẤY!"
-    task.wait(1)
-    TPToolBtn.Text = "TP TOOL (Lấy gậy)"
-end)
-
--- Speed Logic
-local function applySpeed()
-    local hum = player.Character and player.Character:FindFirstChildOfClass("Humanoid")
-    if hum then hum.WalkSpeed = speedActive and currentSpeed or 16 end
-end
-
-local dragging = false
-SliderBtn.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then dragging = true end
-end)
-game:GetService("UserInputService").InputChanged:Connect(function(input)
-    if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
-        local pos = math.clamp((input.Position.X - SliderFrame.AbsolutePosition.X) / SliderFrame.AbsoluteSize.X, 0, 1)
-        SliderInner.Size = UDim2.new(pos, 0, 1, 0)
-        currentSpeed = math.floor(pos * 300)
-        if currentSpeed < 16 then currentSpeed = 16 end
-        SpeedLabel.Text = "CHỌN TỐC ĐỘ: "..currentSpeed
-        if speedActive then applySpeed() end
-    end
-end)
-game:GetService("UserInputService").InputEnded:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then dragging = false end
-end)
-
-SpeedToggle.MouseButton1Click:Connect(function()
-    speedActive = not speedActive
-    SpeedToggle.Text = speedActive and "BẬT TỐC ĐỘ: ON" or "BẬT TỐC ĐỘ: OFF"
+ctive and "BẬT TỐC ĐỘ: ON" or "BẬT TỐC ĐỘ: OFF"
     SpeedToggle.BackgroundColor3 = speedActive and Color3.fromRGB(0, 180, 80) or Color3.fromRGB(80, 80, 80)
     applySpeed()
 end)
