@@ -1,0 +1,196 @@
+-- XÓA GUI CŨ NẾU CÓ
+local player = game:GetService("Players").LocalPlayer
+local pgui = player:WaitForChild("PlayerGui")
+if pgui:FindFirstChild("SimpleTP_V4") then pgui.SimpleTP_V4:Destroy() end
+
+-- TẠO SCREEN GUI
+local sg = Instance.new("ScreenGui")
+sg.Name = "SimpleTP_V4"
+sg.Parent = pgui
+sg.ResetOnSpawn = false
+
+-- 1. NÚT MỞ/ĐÓNG (MÀU XANH)
+local Toggle = Instance.new("TextButton")
+Toggle.Name = "Toggle"
+Toggle.Parent = sg
+Toggle.Size = UDim2.new(0, 50, 0, 50)
+Toggle.Position = UDim2.new(0, 20, 0.4, 0)
+Toggle.BackgroundColor3 = Color3.fromRGB(0, 255, 100)
+Toggle.Text = "MENU"
+Toggle.Font = Enum.Font.SourceSansBold
+Toggle.TextSize = 14
+Toggle.Draggable = true
+Toggle.Active = true
+
+local CornerT = Instance.new("UICorner")
+CornerT.CornerRadius = UDim.new(1, 0)
+CornerT.Parent = Toggle
+
+-- 2. KHUNG MENU CHÍNH (Tăng size để chứa Speed)
+local Main = Instance.new("Frame")
+Main.Name = "Main"
+Main.Parent = sg
+Main.Size = UDim2.new(0, 180, 0, 180) -- Tăng chiều cao lên 180
+Main.Position = UDim2.new(0.5, -90, 0.4, 0)
+Main.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+Main.Visible = true
+Main.Draggable = true
+Main.Active = true
+
+local CornerM = Instance.new("UICorner")
+CornerM.Parent = Main
+
+-- LOGIC ẨN HIỆN
+Toggle.MouseButton1Click:Connect(function()
+    Main.Visible = not Main.Visible
+end)
+
+-- HÀM TẠO NÚT NHANH
+local function create(name, text, pos, size, color)
+    local b = Instance.new("TextButton")
+    b.Name = name
+    b.Text = text
+    b.Position = pos
+    b.Size = size
+    b.BackgroundColor3 = color
+    b.TextColor3 = Color3.fromRGB(255, 255, 255)
+    b.Font = Enum.Font.SourceSansBold
+    b.TextSize = 14
+    b.Parent = Main
+    local c = Instance.new("UICorner")
+    c.CornerRadius = UDim.new(0, 6)
+    c.Parent = b
+    return b
+end
+
+local SetB = create("Set", "SET", UDim2.new(0.05, 0, 0.05, 0), UDim2.new(0, 65, 0, 40), Color3.fromRGB(200, 50, 50))
+local TpB = create("Tp", "TP", UDim2.new(0.05, 0, 0.3, 0), UDim2.new(0, 65, 0, 40), Color3.fromRGB(50, 180, 50))
+local FloatB = create("Float", "FLOAT: OFF", UDim2.new(0.46, 0, 0.05, 0), UDim2.new(0, 65, 0, 85), Color3.fromRGB(60, 60, 60))
+local UpB = create("Up", "▲", UDim2.new(0.85, 0, 0.05, 0), UDim2.new(0, 22, 0, 40), Color3.fromRGB(100, 100, 100))
+local DownB = create("Down", "▼", UDim2.new(0.85, 0, 0.3, 0), UDim2.new(0, 22, 0, 40), Color3.fromRGB(100, 100, 100))
+
+-----------------------------------------------------------
+-- CHỨC NĂNG SPEED (SLIDER)
+-----------------------------------------------------------
+local SpeedLabel = Instance.new("TextLabel", Main)
+SpeedLabel.Size = UDim2.new(1, 0, 0, 20)
+SpeedLabel.Position = UDim2.new(0, 0, 0.6, 0)
+SpeedLabel.BackgroundTransparency = 1
+SpeedLabel.Text = "WalkSpeed: 16"
+SpeedLabel.TextColor3 = Color3.new(1,1,1)
+SpeedLabel.Font = Enum.Font.SourceSansBold
+SpeedLabel.TextSize = 14
+
+local SliderFrame = Instance.new("Frame", Main)
+SliderFrame.Size = UDim2.new(0.9, 0, 0, 10)
+SliderFrame.Position = UDim2.new(0.05, 0, 0.75, 0)
+SliderFrame.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+
+local SliderInner = Instance.new("Frame", SliderFrame)
+SliderInner.Size = UDim2.new(0, 0, 1, 0)
+SliderInner.BackgroundColor3 = Color3.fromRGB(0, 255, 100)
+SliderInner.BorderSizePixel = 0
+
+local SliderBtn = Instance.new("TextButton", SliderFrame)
+SliderBtn.Size = UDim2.new(1, 0, 1, 0)
+SliderBtn.BackgroundTransparency = 1
+SliderBtn.Text = ""
+
+local function updateSpeed(input)
+    local pos = math.clamp((input.Position.X - SliderFrame.AbsolutePosition.X) / SliderFrame.AbsoluteSize.X, 0, 1)
+    SliderInner.Size = UDim2.new(pos, 0, 1, 0)
+    local speed = math.floor(pos * 300)
+    if speed < 16 then speed = 16 end
+    SpeedLabel.Text = "WalkSpeed: "..speed
+    if player.Character and player.Character:FindFirstChild("Humanoid") then
+        player.Character.Humanoid.WalkSpeed = speed
+    end
+end
+
+local dragging = false
+SliderBtn.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        dragging = true
+    end
+end)
+
+game:GetService("UserInputService").InputChanged:Connect(function(input)
+    if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+        updateSpeed(input)
+    end
+end)
+
+game:GetService("UserInputService").InputEnded:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        dragging = false
+    end
+end)
+
+-----------------------------------------------------------
+-- LOGIC CŨ (FLOAT / TP / SET)
+-----------------------------------------------------------
+local savedPos = nil
+local floating = false
+local floatPart = nil
+
+game:GetService("RunService").RenderStepped:Connect(function()
+    if floating and floatPart and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+        local root = player.Character.HumanoidRootPart
+        floatPart.CFrame = CFrame.new(root.Position.X, floatPart.Position.Y, root.Position.Z)
+        -- Đảm bảo speed vẫn giữ khi đang bay
+        if player.Character:FindFirstChild("Humanoid") then
+             player.Character.Humanoid.WalkSpeed = tonumber(SpeedLabel.Text:match("%d+"))
+        end
+    end
+end)
+
+FloatB.MouseButton1Click:Connect(function()
+    local char = player.Character
+    if not char or not char:FindFirstChild("HumanoidRootPart") then return end
+    floating = not floating
+    if floating then
+        floatPart = Instance.new("Part")
+        floatPart.Size = Vector3.new(6, 0.5, 6)
+        floatPart.Anchored = true
+        floatPart.CanCollide = true
+        floatPart.Transparency = 0.5
+        floatPart.Color = Color3.fromRGB(0, 255, 255)
+        floatPart.Parent = char
+        floatPart.CFrame = char.HumanoidRootPart.CFrame * CFrame.new(0, -3.5, 0)
+        FloatB.Text = "ON"
+        FloatB.BackgroundColor3 = Color3.fromRGB(0, 150, 255)
+    else
+        if floatPart then floatPart:Destroy() floatPart = nil end
+        FloatB.Text = "OFF"
+        FloatB.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+    end
+end)
+
+UpB.MouseButton1Click:Connect(function()
+    if floating and floatPart then
+        floatPart.CFrame *= CFrame.new(0, 2, 0)
+        player.Character.HumanoidRootPart.CFrame *= CFrame.new(0, 2, 0)
+    end
+end)
+
+DownB.MouseButton1Click:Connect(function()
+    if floating and floatPart then
+        floatPart.CFrame *= CFrame.new(0, -2, 0)
+        player.Character.HumanoidRootPart.CFrame *= CFrame.new(0, -2, 0)
+    end
+end)
+
+SetB.MouseButton1Click:Connect(function()
+    if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+        savedPos = player.Character.HumanoidRootPart.CFrame
+        SetB.Text = "SAVED"
+        task.wait(0.5)
+        SetB.Text = "SET"
+    end
+end)
+
+TpB.MouseButton1Click:Connect(function()
+    if savedPos and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+        player.Character.HumanoidRootPart.CFrame = savedPos
+    end
+end)
