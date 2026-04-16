@@ -1,39 +1,228 @@
-local p = game.Players.LocalPlayer
-local pg = p:WaitForChild("PlayerGui")
+local ScreenGui = Instance.new("ScreenGui")
+local MainFrame = Instance.new("Frame")
+local Title = Instance.new("TextLabel")
+local OpenButton = Instance.new("TextButton")
 
--- DANH SÁCH QUÁI KHÔNG MUỐN TP (BLACKTiST)
-local blacklistedMobs = {"Cactus", "Xương Rồng"} -- Thêm tên quái vào đây nếu muốn bỏ qua thêm
-
--- 1. TẠO GIAO DIỆN ĐẾM NGƯỢC (10 GIÂY)
-local countdownGui = Instance.new("ScreenGui", pg)
-countdownGui.Name = "CountdownSystem"
-local countdownLabel = Instance.new("TextLabel", countdownGui)
-countdownLabel.Size = UDim2.new(0, 300, 0, 100)
-countdownLabel.Position = UDim2.new(0.5, -150, 0.4, 0)
-countdownLabel.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-countdownLabel.BackgroundTransparency = 0.4
-countdownLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-countdownLabel.Font = Enum.Font.SourceSansBold
-countdownLabel.TextSize = 30
-Instance.new("UICorner", countdownLabel).CornerRadius = UDim.new(0, 15)
-
-for i = 10, 1, -1 do
-    countdownLabel.Text = "start in: " .. i .. "s\n(script by lộc)"
-    if i <= 3 then countdownLabel.TextColor3 = Color3.fromRGB(255, 80, 80) end
-    task.wait(1)
-end
-countdownGui:Destroy()
-
--- 2. CHẠY SCRIPT CHÍNH
-if pg:FindFirstChild("OneTimeTPGui") then pg.OneTimeTPGui:Destroy() end
-
-local ScreenGui = Instance.new("ScreenGui", pg)
-local Button = Instance.new("TextButton", ScreenGui)
-local UICorner = Instance.new("UICorner", Button)
-
-ScreenGui.Name = "OneTimeTPGui"
+-- Cấu hình Menu chính
+ScreenGui.Parent = game.CoreGui
+ScreenGui.Name = "Legacy_Final_Expanded_V5"
 ScreenGui.ResetOnSpawn = false
-Button.Size = UDim2.new(0, 160, 0, 50)
+
+MainFrame.Name = "MainFrame"
+MainFrame.Parent = ScreenGui
+MainFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 20) -- Màu nền tối hơn, sang hơn
+MainFrame.Active = true
+MainFrame.Draggable = true
+Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 15) -- Bo góc Menu
+
+---------------------------------------------------
+-- THIẾT LẬP KÍCH THƯỚC MENU LỚN (GIỐNG TRONG ẢNH) --
+---------------------------------------------------
+-- Vị trí: Ở giữa màn hình
+-- Kích thước: Rộng 350, Cao 600 (Gần như chiếm trọn vùng bạn vẽ)
+MainFrame.Position = UDim2.new(0.5, -175, 0.5, -300) 
+MainFrame.Size = UDim2.new(0, 350, 0, 600) 
+---------------------------------------------------
+
+Title.Parent = MainFrame
+Title.Text = "LEGACY MENU - EXPANDED"
+Title.Size = UDim2.new(1, 0, 0, 40) -- Tiêu đề to hơn
+Title.BackgroundColor3 = Color3.fromRGB(10, 10, 10)
+Title.TextColor3 = Color3.new(1,1,1)
+Title.TextSize = 20 -- Chữ to hơn
+local TitleCorner = Instance.new("UICorner", Title)
+TitleCorner.CornerRadius = UDim.new(0, 15)
+
+-- NÚT MỞ/ĐÓNG
+OpenButton.Parent = ScreenGui
+OpenButton.Size = UDim2.new(0, 80, 0, 35)
+OpenButton.Position = UDim2.new(0, 10, 0, 10)
+OpenButton.Text = "MENU"
+OpenButton.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+OpenButton.TextColor3 = Color3.new(1,1,1)
+OpenButton.Active = true
+OpenButton.Draggable = true
+Instance.new("UICorner", OpenButton)
+
+OpenButton.MouseButton1Click:Connect(function()
+    MainFrame.Visible = not MainFrame.Visible
+end)
+
+-- BIẾN HỆ THỐNG
+local savedPos = nil
+local floatEnabled = false
+local speedEnabled = false
+local noclip = false
+local sl_enabled = false
+local plate = nil
+local currentFloatY = 0
+
+-- HÀM TẠO NÚT NHANH (Phóng to nút để vừa menu lớn)
+local function createBtn(text, yPos, color, func)
+    local b = Instance.new("TextButton", MainFrame)
+    b.Text = text
+    -- Kích thước nút lớn hơn: Rộng 90%, Cao 45
+    b.Size = UDim2.new(0.9, 0, 0, 45)
+    b.Position = UDim2.new(0.05, 0, 0, yPos)
+    b.BackgroundColor3 = color
+    b.TextColor3 = Color3.new(1,1,1)
+    b.TextSize = 18 -- Chữ trong nút to hơn
+    Instance.new("UICorner", b).CornerRadius = UDim.new(0, 8) -- Bo góc nút
+    b.MouseButton1Click:Connect(func)
+    return b
+end
+
+-- TỔNG HỢP CÁC CHỨC NĂNG (Đã điều chỉnh khoảng cách)
+
+-- 1. SET & 2. TP (Đã đổi tên theo ý bạn)
+createBtn("SET", 60, Color3.fromRGB(200, 0, 0), function()
+    if game.Players.LocalPlayer.Character then
+        savedPos = game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame
+    end
+end)
+
+createBtn("TP", 115, Color3.fromRGB(0, 150, 0), function()
+    if savedPos and game.Players.LocalPlayer.Character then 
+        game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = savedPos 
+    end
+end)
+
+-- 3. SPEED (Có thể Bật/Tắt)
+local SpeedInput = Instance.new("TextBox", MainFrame)
+SpeedInput.PlaceholderText = "Nhập tốc độ..."
+-- Kích thước ô nhập lớn hơn
+SpeedInput.Size = UDim2.new(0.9, 0, 0, 40)
+SpeedInput.Position = UDim2.new(0.05, 0, 0, 170)
+SpeedInput.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+SpeedInput.TextColor3 = Color3.new(1,1,1)
+SpeedInput.TextSize = 18
+Instance.new("UICorner", SpeedInput).CornerRadius = UDim.new(0, 8)
+
+local SpeedBtn = createBtn("Speed: OFF", 220, Color3.fromRGB(70, 70, 70), function() end)
+SpeedBtn.MouseButton1Click:Connect(function()
+    speedEnabled = not speedEnabled
+    SpeedBtn.Text = speedEnabled and "Speed: ON" or "Speed: OFF"
+    SpeedBtn.BackgroundColor3 = speedEnabled and Color3.fromRGB(0, 100, 200) or Color3.fromRGB(70, 70, 70)
+    
+    local hum = game.Players.LocalPlayer.Character:FindFirstChild("Humanoid")
+    if hum then
+        hum.WalkSpeed = speedEnabled and (tonumber(SpeedInput.Text) or 16) or 16
+    end
+end)
+
+-- 4. NOCLIP
+local NoclipBtn = createBtn("Noclip: OFF", 275, Color3.fromRGB(70, 70, 70), function() end)
+NoclipBtn.MouseButton1Click:Connect(function()
+    noclip = not noclip
+    NoclipBtn.Text = noclip and "Noclip: ON" or "Noclip: OFF"
+    NoclipBtn.BackgroundColor3 = noclip and Color3.fromRGB(0, 100, 200) or Color3.fromRGB(70, 70, 70)
+end)
+
+game:GetService("RunService").Stepped:Connect(function()
+    if noclip and game.Players.LocalPlayer.Character then
+        for _, v in pairs(game.Players.LocalPlayer.Character:GetDescendants()) do
+            if v:IsA("BasePart") then v.CanCollide = false end
+        end
+    end
+end)
+
+-- 5. FLOAT (Blox Fruit Style - Ván đứng yên khi nhảy)
+local FloatBtn = createBtn("Float: OFF", 330, Color3.fromRGB(70, 70, 70), function() end)
+local FloatControls = Instance.new("Frame", ScreenGui)
+FloatControls.Size = UDim2.new(0, 100, 0, 45)
+FloatControls.Position = UDim2.new(0.5, -50, 1, -120) -- Vị trí góc dưới
+FloatControls.BackgroundColor3 = Color3.new(0,0,0)
+FloatControls.BackgroundTransparency = 0.5
+FloatControls.Visible = false
+Instance.new("UICorner", FloatControls)
+
+local Up = Instance.new("TextButton", FloatControls)
+Up.Text = "+" Up.Size = UDim2.new(0.5,-5,1,-10) Up.Position = UDim2.new(0.5,2,0,5)
+Up.BackgroundColor3 = Color3.fromRGB(60,60,60) Up.TextColor3 = Color3.new(1,1,1)
+local Down = Instance.new("TextButton", FloatControls)
+Down.Text = "-" Down.Size = UDim2.new(0.5,-5,1,-10) Down.Position = UDim2.new(0,3,0,5)
+Down.BackgroundColor3 = Color3.fromRGB(60,60,60) Down.TextColor3 = Color3.new(1,1,1)
+
+FloatBtn.MouseButton1Click:Connect(function()
+    floatEnabled = not floatEnabled
+    FloatBtn.Text = floatEnabled and "Float: ON" or "Float: OFF"
+    FloatBtn.BackgroundColor3 = floatEnabled and Color3.fromRGB(0, 100, 200) or Color3.fromRGB(70, 70, 70)
+    FloatControls.Visible = floatEnabled
+    
+    local hrp = game.Players.LocalPlayer.Character.HumanoidRootPart
+    if floatEnabled then
+        currentFloatY = hrp.Position.Y - 3.5
+        plate = Instance.new("Part", workspace)
+        plate.Size = Vector3.new(20, 1, 20) -- Tấm ván to hơn
+        plate.Anchored = true
+        plate.Transparency = 0.7
+        plate.BrickColor = BrickColor.new("Cyan")
+        spawn(function()
+            while floatEnabled do
+                if hrp then
+                    plate.CFrame = CFrame.new(hrp.Position.X, currentFloatY, hrp.Position.Z)
+                end
+                task.wait()
+            end
+            if plate then plate:Destroy() end
+        end)
+    else
+        if plate then plate:Destroy() end
+    end
+end)
+
+Up.MouseButton1Click:Connect(function()
+    currentFloatY = currentFloatY + 5
+    game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame *= CFrame.new(0, 5, 0)
+end)
+Down.MouseButton1Click:Connect(function()
+    currentFloatY = currentFloatY - 5
+    game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame *= CFrame.new(0, -5, 0)
+end)
+
+-- 6. SHIFTLOCK (Trong Menu)
+local SLBtn = createBtn("Shiftlock: OFF", 385, Color3.fromRGB(70, 70, 70), function() end)
+SLBtn.MouseButton1Click:Connect(function()
+    sl_enabled = not sl_enabled
+    SLBtn.Text = sl_enabled and "Shiftlock: ON" or "Shiftlock: OFF"
+    SLBtn.BackgroundColor3 = sl_enabled and Color3.fromRGB(100, 0, 150) or Color3.fromRGB(70, 70, 70)
+    
+    if sl_enabled then
+        game:GetService("RunService"):BindToRenderStep("MenuSL", 201, function()
+            local char = game.Players.LocalPlayer.Character
+            if char and char:FindFirstChild("Humanoid") then
+                char.Humanoid.AutoRotate = false
+                char.Humanoid.CameraOffset = Vector3.new(1.7, 0, 0)
+                local camLook = workspace.CurrentCamera.CFrame.LookVector
+                char.HumanoidRootPart.CFrame = CFrame.new(char.HumanoidRootPart.Position, char.HumanoidRootPart.Position + Vector3.new(camLook.X, 0, camLook.Z))
+            end
+        end)
+    else
+        game:GetService("RunService"):UnbindFromRenderStep("MenuSL")
+        local char = game.Players.LocalPlayer.Character
+        if char and char:FindFirstChild("Humanoid") then
+            char.Humanoid.AutoRotate = true
+            char.Humanoid.CameraOffset = Vector3.new(0, 0, 0)
+        end
+    end
+end)
+
+-- 7. TP TOOL
+createBtn("GET TP TOOL", 440, Color3.fromRGB(70, 70, 70), function()
+    local tool = Instance.new("Tool", game.Players.LocalPlayer.Backpack)
+    tool.Name = "Teleport Tool"
+    tool.RequiresHandle = false
+    tool.Activated:Connect(function()
+        game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(game.Players.LocalPlayer:GetMouse().Hit.p) + Vector3.new(0, 3, 0)
+    end)
+end)
+
+-- 8. RESET
+createBtn("RESET CHARACTER", 495, Color3.fromRGB(150, 150, 150), function()
+    if game.Players.LocalPlayer.Character then
+        game.Players.LocalPlayer.Character:BreakJoints()
+    end
+end)
 Button.Position = UDim2.new(0.5, -80, 0.15, 0)
 Button.TextColor3 = Color3.fromRGB(255, 255, 255)
 Button.Font = Enum.Font.SourceSansBold
