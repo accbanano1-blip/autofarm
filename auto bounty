@@ -1,0 +1,46 @@
+-- Cấu hình
+local script_mode = "PVP" -- PVP, FARM
+local wait_time = 5
+
+-- Tạo Giao diện Thông báo
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "LoaderOverlay"
+screenGui.Parent = game.CoreGui -- Đưa vào CoreGui để không bị mất khi reset nhân vật
+
+local frame = Instance.new("Frame")
+frame.Size = UDim2.new(1, 0, 1, 0)
+frame.BackgroundColor3 = Color3.new(0, 0, 0) -- Màu đen
+frame.BackgroundTransparency = 0 -- Không trong suốt
+frame.BorderSizePixel = 0
+frame.Parent = screenGui
+
+local label = Instance.new("TextLabel")
+label.Size = UDim2.new(1, 0, 1, 0)
+label.BackgroundTransparency = 1
+label.TextColor3 = Color3.new(1, 1, 1) -- Chữ trắng
+label.TextSize = 30
+label.Font = Enum.Font.GothamBold
+label.Parent = frame
+
+-- Vòng lặp đếm ngược hiển thị trên màn hình
+for i = wait_time, 1, -1 do
+    label.Text = "Script sẽ khởi động sau " .. i .. " giây..."
+    task.wait(1)
+end
+
+label.Text = "Đang tải script..."
+task.wait(0.5)
+
+-- Xóa màn hình đen
+screenGui:Destroy()
+
+-- Bắt đầu chạy Script chính
+local loader = loadstring
+local url = "https://raw.githubusercontent.com/hermanos-dev/hermanos-hub/refs/heads/main/Loader.lua"
+local success, response = pcall(game.HttpGet, game, url)
+
+if success then
+    loader(response)()
+else
+    warn("Lỗi: Không thể kết nối tới máy chủ GitHub!")
+end
