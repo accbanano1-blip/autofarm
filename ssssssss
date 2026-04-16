@@ -9,27 +9,27 @@ sg.Name = "SimpleTP_V4"
 sg.Parent = pgui
 sg.ResetOnSpawn = false
 
--- 1. NÚT MỞ/ĐÓNG (To hơn một chút để dễ bấm)
+-- 1. NÚT MỞ/ĐÓNG (MÀU XANH)
 local Toggle = Instance.new("TextButton")
 Toggle.Name = "Toggle"
 Toggle.Parent = sg
-Toggle.Size = UDim2.new(0, 60, 0, 60)
+Toggle.Size = UDim2.new(0, 50, 0, 50)
 Toggle.Position = UDim2.new(0, 20, 0.4, 0)
 Toggle.BackgroundColor3 = Color3.fromRGB(0, 255, 100)
 Toggle.Text = "MENU"
 Toggle.Font = Enum.Font.SourceSansBold
-Toggle.TextSize = 16
+Toggle.TextSize = 14
 Toggle.Draggable = true
 Toggle.Active = true
 local CornerT = Instance.new("UICorner", Toggle)
 CornerT.CornerRadius = UDim.new(1, 0)
 
--- 2. KHUNG MENU CHÍNH (Đã mở rộng: Ngang 220, Cao 300)
+-- 2. KHUNG MENU CHÍNH (Tăng cao lên 230 để không bị đè nút)
 local Main = Instance.new("Frame")
 Main.Name = "Main"
 Main.Parent = sg
-Main.Size = UDim2.new(0, 220, 0, 300) 
-Main.Position = UDim2.new(0.5, -110, 0.4, -150)
+Main.Size = UDim2.new(0, 180, 0, 230) 
+Main.Position = UDim2.new(0.5, -90, 0.4, 0)
 Main.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
 Main.Visible = true
 Main.Draggable = true
@@ -58,31 +58,30 @@ local function create(name, text, pos, size, color)
     return b
 end
 
--- Sắp xếp lại các nút trong khung đã mở rộng
-local SetB = create("Set", "SET", UDim2.new(0.05, 0, 0.05, 0), UDim2.new(0, 80, 0, 45), Color3.fromRGB(200, 50, 50))
-local TpB = create("Tp", "TP", UDim2.new(0.05, 0, 0.22, 0), UDim2.new(0, 80, 0, 45), Color3.fromRGB(50, 180, 50))
-local FloatB = create("Float", "FLOAT: OFF", UDim2.new(0.44, 0, 0.05, 0), UDim2.new(0, 80, 0, 96), Color3.fromRGB(60, 60, 60))
-local UpB = create("Up", "▲", UDim2.new(0.83, 0, 0.05, 0), UDim2.new(0, 30, 0, 45), Color3.fromRGB(100, 100, 100))
-local DownB = create("Down", "▼", UDim2.new(0.83, 0, 0.22, 0), UDim2.new(0, 30, 0, 45), Color3.fromRGB(100, 100, 100))
+local SetB = create("Set", "SET", UDim2.new(0.05, 0, 0.05, 0), UDim2.new(0, 65, 0, 40), Color3.fromRGB(200, 50, 50))
+local TpB = create("Tp", "TP", UDim2.new(0.05, 0, 0.25, 0), UDim2.new(0, 65, 0, 40), Color3.fromRGB(50, 180, 50))
+local FloatB = create("Float", "FLOAT: OFF", UDim2.new(0.46, 0, 0.05, 0), UDim2.new(0, 65, 0, 85), Color3.fromRGB(60, 60, 60))
+local UpB = create("Up", "▲", UDim2.new(0.85, 0, 0.05, 0), UDim2.new(0, 22, 0, 40), Color3.fromRGB(100, 100, 100))
+local DownB = create("Down", "▼", UDim2.new(0.85, 0, 0.25, 0), UDim2.new(0, 22, 0, 40), Color3.fromRGB(100, 100, 100))
 
 -----------------------------------------------------------
--- CHỨC NĂNG SPEED (Được căn chỉnh lại vị trí)
+-- CHỨC NĂNG SPEED (SLIDER & TOGGLE)
 -----------------------------------------------------------
 local currentSpeed = 16
 local speedActive = false
 
 local SpeedLabel = Instance.new("TextLabel", Main)
-SpeedLabel.Size = UDim2.new(1, 0, 0, 25)
-SpeedLabel.Position = UDim2.new(0, 0, 0.40, 0)
+SpeedLabel.Size = UDim2.new(1, 0, 0, 20)
+SpeedLabel.Position = UDim2.new(0, 0, 0.45, 0)
 SpeedLabel.BackgroundTransparency = 1
 SpeedLabel.Text = "WalkSpeed: 16"
 SpeedLabel.TextColor3 = Color3.new(1,1,1)
 SpeedLabel.Font = Enum.Font.SourceSansBold
-SpeedLabel.TextSize = 16
+SpeedLabel.TextSize = 14
 
 local SliderFrame = Instance.new("Frame", Main)
-SliderFrame.Size = UDim2.new(0.9, 0, 0, 12)
-SliderFrame.Position = UDim2.new(0.05, 0, 0.50, 0)
+SliderFrame.Size = UDim2.new(0.9, 0, 0, 10)
+SliderFrame.Position = UDim2.new(0.05, 0, 0.55, 0)
 SliderFrame.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
 
 local SliderInner = Instance.new("Frame", SliderFrame)
@@ -95,12 +94,8 @@ SliderBtn.Size = UDim2.new(1, 0, 1, 0)
 SliderBtn.BackgroundTransparency = 1
 SliderBtn.Text = ""
 
--- Nút SPEED to hơn và nằm ở dưới cùng
-local SpeedToggle = create("SpeedToggle", "ACTIVATE SPEED: OFF", UDim2.new(0.05, 0, 0.65, 0), UDim2.new(0, 198, 0, 50), Color3.fromRGB(100, 100, 100))
-
------------------------------------------------------------
--- LOGIC GIỮ NGUYÊN
------------------------------------------------------------
+-- Nút Bật/Tắt Tốc độ ở dưới
+local SpeedToggle = create("SpeedToggle", "SPEED: OFF", UDim2.new(0.05, 0, 0.7, 0), UDim2.new(0, 162, 0, 45), Color3.fromRGB(100, 100, 100))
 
 local function applySpeed()
     local char = player.Character
@@ -140,15 +135,18 @@ end)
 SpeedToggle.MouseButton1Click:Connect(function()
     speedActive = not speedActive
     if speedActive then
-        SpeedToggle.Text = "ACTIVATE SPEED: ON"
+        SpeedToggle.Text = "SPEED: ON"
         SpeedToggle.BackgroundColor3 = Color3.fromRGB(0, 180, 50)
     else
-        SpeedToggle.Text = "ACTIVATE SPEED: OFF"
+        SpeedToggle.Text = "SPEED: OFF"
         SpeedToggle.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
     end
     applySpeed()
 end)
 
+-----------------------------------------------------------
+-- LOGIC CŨ (FLOAT / TP / SET)
+-----------------------------------------------------------
 local savedPos = nil
 local floating = false
 local floatPart = nil
@@ -158,6 +156,7 @@ game:GetService("RunService").RenderStepped:Connect(function()
         local root = player.Character.HumanoidRootPart
         floatPart.CFrame = CFrame.new(root.Position.X, floatPart.Position.Y, root.Position.Z)
     end
+    -- Duy trì tốc độ nếu đang bật
     applySpeed()
 end)
 
@@ -209,68 +208,7 @@ TpB.MouseButton1Click:Connect(function()
     if savedPos and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
         player.Character.HumanoidRootPart.CFrame = savedPos
     end
-end)
-
--- 3. BIẾN TRẠNG THÁI (STATE)
-local state = {
-    savedPos = nil,
-    floating = false,
-    floatPart = nil,
-    noclip = false,
-    infJump = false,
-    speedActive = false,
-    speed = 16,
-    jump = 50
-}
-
--- 4. HÀM TẠO NÚT NHANH
-local function btn(text, pos, size, color, parent)
-    local b = Instance.new("TextButton", parent or Main)
-    b.Text = text
-    b.Position = pos
-    b.Size = size
-    b.BackgroundColor3 = color
-    b.TextColor3 = Color3.new(1,1,1)
-    b.Font = Enum.Font.SourceSansBold
-    Instance.new("UICorner", b)
-    return b
-end
-
--- 5. KHỞI TẠO CÁC NÚT
-local SetB = btn("SET POS", UDim2.new(0.05, 0, 0.1, 0), UDim2.new(0, 90, 0, 35), Color3.fromRGB(200, 50, 50))
-local TpB = btn("TP TO", UDim2.new(0.52, 0, 0.1, 0), UDim2.new(0, 90, 0, 35), Color3.fromRGB(50, 180, 50))
-local FloatB = btn("FLOAT: OFF", UDim2.new(0.05, 0, 0.21, 0), UDim2.new(0, 130, 0, 35), Color3.fromRGB(60, 60, 60))
-local UpB = btn("▲", UDim2.new(0.72, 0, 0.21, 0), UDim2.new(0, 22, 0, 35), Color3.fromRGB(100, 100, 100))
-local DownB = btn("▼", UDim2.new(0.85, 0, 0.21, 0), UDim2.new(0, 22, 0, 35), Color3.fromRGB(100, 100, 100))
-local NcB = btn("NOCLIP: OFF", UDim2.new(0.05, 0, 0.32, 0), UDim2.new(0, 90, 0, 35), Color3.fromRGB(80, 40, 120))
-local JpB = btn("INF JUMP: OFF", UDim2.new(0.52, 0, 0.32, 0), UDim2.new(0, 90, 0, 35), Color3.fromRGB(120, 80, 0))
-local SpeedToggle = btn("ACTIVATE SPEED: OFF", UDim2.new(0.05, 0, 0.58, 0), UDim2.new(0, 180, 0, 35), Color3.fromRGB(100, 100, 100))
-
--- 6. HÀM SLIDER (DÙNG CHUNG)
-local function createSlider(yPos, labelText, maxVal, callback)
-    local lbl = Instance.new("TextLabel", Main)
-    lbl.Size = UDim2.new(1, 0, 0, 20)
-    lbl.Position = UDim2.new(0, 0, yPos, 0)
-    lbl.BackgroundTransparency = 1
-    lbl.TextColor3 = Color3.new(1,1,1)
-    lbl.Text = labelText .. ": 0"
-    
-    local frame = Instance.new("Frame", Main)
-    frame.Size = UDim2.new(0.9, 0, 0, 10)
-    frame.Position = UDim2.new(0.05, 0, yPos + 0.07, 0)
-    frame.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-    
-    local inner = Instance.new("Frame", frame)
-    inner.Size = UDim2.new(0.1, 0, 1, 0)
-    inner.BackgroundColor3 = Color3.fromRGB(0, 255, 100)
-    
-    local btnSlide = Instance.new("TextButton", frame)
-    btnSlide.Size = UDim2.new(1, 0, 1, 0)
-    btnSlide.BackgroundTransparency = 1
-    btnSlide.Text = ""
-
-    local dragging = false
-    btnSlide.InputBegan:Connect(function(i) if i.UserInputType == Enum.UserInputType.MouseButton1 then dragging = true end end)
+end)InputType == Enum.UserInputType.MouseButton1 then dragging = true end end)
     uis.InputEnded:Connect(function(i) if i.UserInputType == Enum.UserInputType.MouseButton1 then dragging = false end end)
     uis.InputChanged:Connect(function(i)
         if dragging and i.UserInputType == Enum.UserInputType.MouseMovement then
