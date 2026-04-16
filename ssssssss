@@ -1,39 +1,153 @@
--- Roblox GUI Script: Multi-Tool Menu
 local ScreenGui = Instance.new("ScreenGui")
 local MainFrame = Instance.new("Frame")
 local Title = Instance.new("TextLabel")
-local SetPosBtn = Instance.new("TextButton")
-local TpPosBtn = Instance.new("TextButton")
-local SpeedInput = Instance.new("TextBox")
-local SpeedBtn = Instance.new("TextButton")
-local FloatBtn = Instance.new("TextButton")
-local HeightUp = Instance.new("TextButton")
-local HeightDown = Instance.new("TextButton")
-local TpToolBtn = Instance.new("TextButton")
+local CloseButton = Instance.new("TextButton")
+local OpenButton = Instance.new("TextButton")
 
 -- Cấu hình Menu chính
 ScreenGui.Parent = game.CoreGui
+ScreenGui.Name = "LegacyMenu"
+
 MainFrame.Name = "MainFrame"
 MainFrame.Parent = ScreenGui
 MainFrame.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
-MainFrame.Position = UDim2.new(0.1, 0, 0.2, 0)
-MainFrame.Size = UDim2.new(0, 200, 0, 350)
+MainFrame.Position = UDim2.new(0.5, -100, 0.5, -150)
+MainFrame.Size = UDim2.new(0, 200, 0, 320)
 MainFrame.Active = true
 MainFrame.Draggable = true
 
 Title.Parent = MainFrame
+Title.Text = "LEGACY MENU"
 Title.Size = UDim2.new(1, 0, 0, 30)
-Title.Text = "Gemini Control"
-Title.TextColor3 = Color3.new(1, 1, 1)
 Title.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+Title.TextColor3 = Color3.fromRGB(255, 255, 255)
+
+OpenButton.Name = "OpenButton"
+OpenButton.Parent = ScreenGui
+OpenButton.Size = UDim2.new(0, 80, 0, 30)
+OpenButton.Position = UDim2.new(0, 10, 0, 10)
+OpenButton.Text = "OPEN/CLOSE"
+OpenButton.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+OpenButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+OpenButton.Visible = true
+
+OpenButton.MouseButton1Click:Connect(function()
+    MainFrame.Visible = not MainFrame.Visible
+end)
+
+-- Biến lưu trữ dữ liệu
+local savedPos = nil
+local speedEnabled = false
+local floatEnabled = false
+local floatValue = 0
 
 -- 1. Nút SET (Màu đỏ)
-local savedPosition = nil
-SetPosBtn.Name = "SetPosBtn"
-SetPosBtn.Parent = MainFrame
-SetPosBtn.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
-SetPosBtn.Position = UDim2.new(0.05, 0, 0.12, 0)
-SetPosBtn.Size = UDim2.new(0.9, 0, 0, 40)
+local SetButton = Instance.new("TextButton")
+SetButton.Parent = MainFrame
+SetButton.Text = "SET"
+SetButton.BackgroundColor3 = Color3.fromRGB(200, 0, 0)
+SetButton.Position = UDim2.new(0.1, 0, 0.12, 0)
+SetButton.Size = UDim2.new(0.8, 0, 0, 30)
+
+SetButton.MouseButton1Click:Connect(function()
+    savedPos = game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame
+    print("Đã lưu vị trí!")
+end)
+
+-- 2. Nút TP (Xanh lá)
+local TpButton = Instance.new("TextButton")
+TpButton.Parent = MainFrame
+TpButton.Text = "TP"
+TpButton.BackgroundColor3 = Color3.fromRGB(0, 200, 0)
+TpButton.Position = UDim2.new(0.1, 0, 0.25, 0)
+TpButton.Size = UDim2.new(0.8, 0, 0, 30)
+
+TpButton.MouseButton1Click:Connect(function()
+    if savedPos then
+        game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = savedPos
+    end
+end)
+
+-- 3. SPEED (Có ô nhập)
+local SpeedInput = Instance.new("TextBox")
+SpeedInput.Parent = MainFrame
+SpeedInput.PlaceholderText = "Nhập tốc độ..."
+SpeedInput.Position = UDim2.new(0.1, 0, 0.38, 0)
+SpeedInput.Size = UDim2.new(0.8, 0, 0, 25)
+
+local SpeedButton = Instance.new("TextButton")
+SpeedButton.Parent = MainFrame
+SpeedButton.Text = "Speed: OFF"
+SpeedButton.Position = UDim2.new(0.1, 0, 0.47, 0)
+SpeedButton.Size = UDim2.new(0.8, 0, 0, 30)
+
+SpeedButton.MouseButton1Click:Connect(function()
+    speedEnabled = not speedEnabled
+    SpeedButton.Text = speedEnabled and "Speed: ON" or "Speed: OFF"
+    if speedEnabled then
+        local val = tonumber(SpeedInput.Text) or 16
+        game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = val
+    else
+        game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = 16
+    end
+end)
+
+-- 4. FLOAT (Bay tự do)
+local FloatButton = Instance.new("TextButton")
+FloatButton.Parent = MainFrame
+FloatButton.Text = "Float: OFF"
+FloatButton.Position = UDim2.new(0.1, 0, 0.6, 0)
+FloatButton.Size = UDim2.new(0.8, 0, 0, 30)
+
+FloatButton.MouseButton1Click:Connect(function()
+    floatEnabled = not floatEnabled
+    FloatButton.Text = floatEnabled and "Float: ON" or "Float: OFF"
+    local hrp = game.Players.LocalPlayer.Character.HumanoidRootPart
+    
+    if floatEnabled then
+        local bv = Instance.new("BodyVelocity")
+        bv.Name = "FloatBV"
+        bv.Velocity = Vector3.new(0, 0, 0)
+        bv.MaxForce = Vector3.new(0, math.huge, 0)
+        bv.Parent = hrp
+    else
+        if hrp:FindFirstChild("FloatBV") then hrp.FloatBV:Destroy() end
+    end
+end)
+
+-- Nút điều chỉnh Float Up/Down
+local UpBtn = Instance.new("TextButton", MainFrame)
+UpBtn.Text = "+" UpBtn.Size = UDim2.new(0.35, 0, 0, 20) UpBtn.Position = UDim2.new(0.1, 0, 0.7, 0)
+local DownBtn = Instance.new("TextButton", MainFrame)
+DownBtn.Text = "-" DownBtn.Size = UDim2.new(0.35, 0, 0, 20) DownBtn.Position = UDim2.new(0.55, 0, 0.7, 0)
+
+UpBtn.MouseButton1Click:Connect(function()
+    if floatEnabled then game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame *= CFrame.new(0, 5, 0) end
+end)
+DownBtn.MouseButton1Click:Connect(function()
+    if floatEnabled then game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame *= CFrame.new(0, -5, 0) end
+end)
+
+-- 5. TP TOOL
+local ToolButton = Instance.new("TextButton")
+ToolButton.Parent = MainFrame
+ToolButton.Text = "Get TP Tool"
+ToolButton.Position = UDim2.new(0.1, 0, 0.82, 0)
+ToolButton.Size = UDim2.new(0.8, 0, 0, 35)
+
+ToolButton.MouseButton1Click:Connect(function()
+    local tool = Instance.new("Tool")
+    tool.Name = "TP Tool"
+    tool.RequiresHandle = false
+    tool.Parent = game.Players.LocalPlayer.Backpack
+    
+    tool.Activated:Connect(function()
+        local mouse = game.Players.LocalPlayer:GetMouse()
+        if mouse.Target then
+            game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(mouse.Hit.p) + Vector3.new(0, 3, 0)
+        end
+    end)
+end)
 SetPosBtn.Text = "SET"
 SetPosBtn.TextColor3 = Color3.new(1, 1, 1)
 
