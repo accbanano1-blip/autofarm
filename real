@@ -79,4 +79,243 @@ local player = game.Players.LocalPlayer
 local RunService = game:GetService("RunService")
 local Lighting = game:GetService("Lighting")
 local speedOn, noclipOn, floatOn, slOn, nvOn, espOn, invizOn = false, false, false, false, false, false, false
-local savedPos, plate, floatHeig
+local savedPos, plate, floatHeight = nil, nil, 0
+
+local originalBrightness = Lighting.Brightness
+local originalClockTime = Lighting.ClockTime
+local originalFogEnd = Lighting.FogEnd
+
+local function createGridBtn(text, color, layoutOrder)
+    local b = Instance.new("TextButton", ScrollFrame)
+    b.Text = text
+    b.BackgroundColor3 = color
+    b.TextColor3 = Color3.new(1,1,1)
+    b.LayoutOrder = layoutOrder
+    Instance.new("UICorner", b).CornerRadius = UDim.new(0, 8)
+    return b
+end
+
+-- --- CHỨC NĂNG ESP TÊN ---
+local function createESP(plr)
+    if plr == player then return end
+    local function addTag(char)
+        local head = char:WaitForChild("Head", 10)
+        if not head then return end
+        local bgui = Instance.new("BillboardGui", char)
+        bgui.Name = "ESP_Tag"
+        bgui.Adornee = head
+        bgui.Size = UDim2.new(0, 100, 0, 50)
+        bgui.StudsOffset = Vector3.new(0, 2, 0)
+        bgui.AlwaysOnTop = true
+        bgui.Enabled = espOn
+        local text = Instance.new("TextLabel", bgui)
+        text.BackgroundTransparency = 1
+        text.Size = UDim2.new(1, 0, 1, 0)
+        text.Text = plr.Name
+        text.Font = Enum.Font.SourceSansBold
+        text.TextSize = 14
+        text.TextColor3 = Color3.new(1, 1, 1)
+        text.TextStrokeTransparency = 0
+    end
+    plr.CharacterAdded:Connect(addTag)
+    if plr.Character then addTag(plr.Character) end
+end
+
+-- --- NÚT CHỨC NĂNG ---
+createGridBtn("SET", Color3.fromRGB(200, 0, 0), 1).MouseButton1Click:Connect(function()
+    if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then savedPos = player.Character.HumanoidRootPart.CFrame end
+end)
+
+createGridBtn("TP", Color3.fromRGB(0, 150, 0), 2).MouseButton1Click:Connect(function()
+    if savedPos and player.Character then player.Character.HumanoidRootPart.CFrame = savedPos end
+end)
+
+local SpeedFrame = Instance.new("Frame", ScrollFrame)
+SpeedFrame.BackgroundTransparency = 1
+SpeedFrame.LayoutOrder = 3
+local SpeedInput = Instance.new("TextBox", SpeedFrame)
+SpeedInput.PlaceholderText = "Tốc độ..."
+SpeedInput.Size = UDim2.new(1, 0, 1, 0)
+SpeedInput.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+SpeedInput.TextColor3 = Color3.new(1,1,1)
+Instance.new("UICorner", SpeedInput)
+
+local SpeedBtn = createGridBtn("Speed: OFF", Color3.fromRGB(70, 70, 70), 4)
+SpeedBtn.MouseButton1Click:Connect(function()
+    speedOn = not speedOn
+    SpeedBtn.Text = speedOn and "Speed: ON" or "Speed: OFF"
+    SpeedBtn.BackgroundColor3 = speedOn and Color3.fromRGB(0, 100, 200) or Color3.fromRGB(70, 70, 70)
+end)
+
+local GotoFrame = Instance.new("Frame", ScrollFrame)
+GotoFrame.BackgroundTransparency = 1
+GotoFrame.LayoutOrder = 5
+local GotoInput = Instance.new("TextBox", GotoFrame)
+GotoInput.PlaceholderText = "Tên..."
+GotoInput.Size = UDim2.new(1, 0, 1, 0)
+GotoInput.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+GotoInput.TextColor3 = Color3.new(1,1,1)
+Instance.new("UICorner", GotoInput)
+
+createGridBtn("GOTO", Color3.fromRGB(100, 0, 200), 6).MouseButton1Click:Connect(function()
+    local t = GotoInput.Text:lower()
+    for _, v in pairs(game.Players:GetPlayers()) do
+        if v ~= player and (v.Name:lower():find(t) or v.DisplayName:lower():find(t)) then
+            player.Character.HumanoidRootPart.CFrame = v.Character.HumanoidRootPart.CFrame
+            break
+        end
+    end
+end)
+
+local NoclipBtn = createGridBtn("Noclip: OFF", Color3.fromRGB(70, 70, 70), 7)
+NoclipBtn.MouseButton1Click:Connect(function()
+    noclipOn = not noclipOn
+    NoclipBtn.Text = noclipOn and "Noclip: ON" or "Noclip: OFF"
+    NoclipBtn.BackgroundColor3 = noclipOn and Color3.fromRGB(0, 100, 200) or Color3.fromRGB(70, 70, 70)
+end)
+
+local FloatBtn = createGridBtn("Float: OFF", Color3.fromRGB(70, 70, 70), 8)
+FloatBtn.MouseButton1Click:Connect(function()
+    floatOn = not floatOn
+    FloatBtn.Text = floatOn and "Float: ON" or "Float: OFF"
+    FloatBtn.BackgroundColor3 = floatOn and Color3.fromRGB(0, 100, 200) or Color3.fromRGB(70, 70, 70)
+    FloatControlFrame.Visible = floatOn 
+    if floatOn and player.Character:FindFirstChild("HumanoidRootPart") then
+        floatHeight = player.Character.HumanoidRootPart.Position.Y - 3.5
+    elseif plate then
+        plate:Destroy() plate = nil
+    end
+end)
+
+local SLBtn = createGridBtn("Shiftlock: OFF", Color3.fromRGB(70, 70, 70), 9)
+SLBtn.MouseButton1Click:Connect(function()
+    slOn = not slOn
+    SLBtn.Text = slOn and "Shiftlock: ON" or "Shiftlock: OFF"
+    SLBtn.BackgroundColor3 = slOn and Color3.fromRGB(100, 0, 150) or Color3.fromRGB(70, 70, 70)
+end)
+
+createGridBtn("TP TOOL", Color3.fromRGB(70, 70, 70), 10).MouseButton1Click:Connect(function()
+    local tool = Instance.new("Tool", player.Backpack)
+    tool.Name = "TP Tool"
+    tool.RequiresHandle = false
+    tool.Activated:Connect(function() player.Character.HumanoidRootPart.CFrame = CFrame.new(player:GetMouse().Hit.p) + Vector3.new(0, 3, 0) end)
+end)
+
+local NVBtn = createGridBtn("NightVision: OFF", Color3.fromRGB(70, 70, 70), 11)
+NVBtn.MouseButton1Click:Connect(function()
+    nvOn = not nvOn
+    NVBtn.Text = nvOn and "NightVision: ON" or "NightVision: OFF"
+    NVBtn.BackgroundColor3 = nvOn and Color3.fromRGB(255, 200, 0) or Color3.fromRGB(70, 70, 70)
+    if nvOn then
+        Lighting.Brightness = 2
+        Lighting.ClockTime = 14
+        Lighting.FogEnd = 100000
+        Lighting.GlobalShadows = false
+        Lighting.OutdoorAmbient = Color3.fromRGB(255, 255, 255)
+    else
+        Lighting.Brightness = originalBrightness
+        Lighting.ClockTime = originalClockTime
+        Lighting.FogEnd = originalFogEnd
+        Lighting.GlobalShadows = true
+        Lighting.OutdoorAmbient = Color3.fromRGB(127, 127, 127)
+    end
+end)
+
+-- --- CHỨC NĂNG INVISIBLE TOOL (THAY THẾ JERK) ---
+local InvizBtn = createGridBtn("Inviz Tool: OFF", Color3.fromRGB(70, 70, 70), 12)
+InvizBtn.MouseButton1Click:Connect(function()
+    invizOn = not invizOn
+    InvizBtn.Text = invizOn and "Inviz Tool: ON" or "Inviz Tool: OFF"
+    InvizBtn.BackgroundColor3 = invizOn and Color3.fromRGB(0, 150, 200) or Color3.fromRGB(70, 70, 70)
+    
+    if invizOn then
+        local iTool = Instance.new("Tool")
+        iTool.Name = "Invisible"
+        iTool.RequiresHandle = false
+        iTool.Parent = player.Backpack
+        
+        iTool.Equipped:Connect(function()
+            if player.Character then
+                for _, v in pairs(player.Character:GetDescendants()) do
+                    if v:IsA("BasePart") or v:IsA("Decal") then v.Transparency = 1 end
+                end
+            end
+        end)
+        
+        iTool.Unequipped:Connect(function()
+            if player.Character then
+                for _, v in pairs(player.Character:GetDescendants()) do
+                    if v:IsA("BasePart") or v:IsA("Decal") then v.Transparency = 0 end
+                end
+            end
+        end)
+    else
+        if player.Backpack:FindFirstChild("Invisible") then player.Backpack.Invisible:Destroy() end
+        if player.Character:FindFirstChild("Invisible") then
+             for _, v in pairs(player.Character:GetDescendants()) do
+                if v:IsA("BasePart") or v:IsA("Decal") then v.Transparency = 0 end
+            end
+            player.Character.Invisible:Destroy()
+        end
+    end
+end)
+
+local ESPBtn = createGridBtn("ESP Name: OFF", Color3.fromRGB(70, 70, 70), 13)
+ESPBtn.MouseButton1Click:Connect(function()
+    espOn = not espOn
+    ESPBtn.Text = espOn and "ESP Name: ON" or "ESP Name: OFF"
+    ESPBtn.BackgroundColor3 = espOn and Color3.fromRGB(0, 200, 100) or Color3.fromRGB(70, 70, 70)
+    for _, p in pairs(game.Players:GetPlayers()) do
+        if p.Character and p.Character:FindFirstChild("ESP_Tag") then p.Character.ESP_Tag.Enabled = espOn end
+    end
+end)
+
+for _, p in pairs(game.Players:GetPlayers()) do createESP(p) end
+game.Players.PlayerAdded:Connect(createESP)
+
+-- --- VÒNG LẶP XỬ LÝ ---
+UpBtn.MouseButton1Click:Connect(function() if floatOn then floatHeight = floatHeight + 2 end end)
+DownBtn.MouseButton1Click:Connect(function() if floatOn then floatHeight = floatHeight - 2 end end)
+
+RunService.Stepped:Connect(function()
+    if not player.Character then return end
+    if noclipOn then
+        for _, v in pairs(player.Character:GetDescendants()) do
+            if v:IsA("BasePart") and v.CanCollide == true then v.CanCollide = false end
+        end
+    end
+end)
+
+RunService.RenderStepped:Connect(function()
+    local char = player.Character
+    if not char or not char:FindFirstChild("HumanoidRootPart") then return end
+    local hrp = char.HumanoidRootPart
+    local hum = char:FindFirstChild("Humanoid")
+
+    if hum then hum.WalkSpeed = speedOn and (tonumber(SpeedInput.Text) or 16) or 16 end
+
+    if floatOn then
+        if not plate or plate.Parent ~= workspace then
+            plate = Instance.new("Part", workspace)
+            plate.Size = Vector3.new(15, 1, 15)
+            plate.Anchored = true
+            plate.Transparency = 0.7
+            plate.BrickColor = BrickColor.new("Cyan")
+        end
+        plate.CFrame = CFrame.new(hrp.Position.X, floatHeight, hrp.Position.Z)
+    end
+
+    if slOn and hum then
+        hum.AutoRotate = false
+        hum.CameraOffset = Vector3.new(1.7, 0, 0)
+        hrp.CFrame = CFrame.new(hrp.Position, hrp.Position + Vector3.new(workspace.CurrentCamera.CFrame.LookVector.X, 0, workspace.CurrentCamera.CFrame.LookVector.Z))
+    elseif hum then
+        hum.AutoRotate = true
+        hum.CameraOffset = Vector3.new(0, 0, 0)
+    end
+    
+    if nvOn then
+        Lighting.ClockTime = 14
+        Lighting.Brightness = 2
+    end
+end)
